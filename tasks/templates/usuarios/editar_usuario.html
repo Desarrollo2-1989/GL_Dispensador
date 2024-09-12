@@ -1,0 +1,160 @@
+{% extends 'adminlte/base.html' %}
+
+{% block title %}
+    Editar Usuario - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Editar Usuario</h3>
+                    </div>
+                    <!-- /.card-header -->
+
+                    <!-- Formulario para editar un usuario -->
+                    <form role="form" method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <!-- Campo Cédula -->
+                            <div class="form-group">
+                                <label for="{{ form.cedula.id_for_label }}">Cédula</label>
+                                <input type="text"
+                                       class="form-control {% if form.cedula.errors %}is-invalid{% endif %}"
+                                       id="{{ form.cedula.id_for_label }}"
+                                       name="cedula"
+                                       value="{{ form.cedula.value|default_if_none:'' }}"
+                                       placeholder="Ingrese la cédula"
+                                       readonly>
+                                {% if form.cedula.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cedula.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Nombre Completo -->
+                            <div class="form-group">
+                                <label for="{{ form.nombre_persona.id_for_label }}">Nombre Completo</label>
+                                <input type="text"
+                                       class="form-control {% if form.nombre_persona.errors %}is-invalid{% endif %}"
+                                       id="{{ form.nombre_persona.id_for_label }}"
+                                       name="nombre_persona"
+                                       value="{{ form.nombre_persona.value|default_if_none:'' }}"
+                                       placeholder="Ingrese el nombre completo">
+                                {% if form.nombre_persona.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nombre_persona.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Nombre de Usuario -->
+                            <div class="form-group">
+                                <label for="{{ form.nombre_usuario.id_for_label }}">Nombre de Usuario</label>
+                                <input type="text"
+                                       class="form-control {% if form.nombre_usuario.errors %}is-invalid{% endif %}"
+                                       id="{{ form.nombre_usuario.id_for_label }}"
+                                       name="nombre_usuario"
+                                       value="{{ form.nombre_usuario.value|default_if_none:'' }}"
+                                       placeholder="Ingrese el nombre de usuario">
+                                {% if form.nombre_usuario.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nombre_usuario.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Contraseña -->
+                            <div class="form-group position-relative">
+                                <label for="{{ form.contraseña.id_for_label }}">Contraseña</label>
+                                <div class="input-group">
+                                    <input type="password"
+                                           class="form-control {% if form.contraseña.errors %}is-invalid{% endif %}"
+                                           id="{{ form.contraseña.id_for_label }}"
+                                           name="contraseña"
+                                           placeholder="Ingrese una nueva contraseña (dejar vacío si no desea cambiarla)">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text" id="password-toggle">
+                                            <i class="fas fa-eye-slash" id="password-toggle-icon"></i>
+                                        </span>
+                                    </div>
+                                    {% if form.contraseña.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.contraseña.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Campo Rol -->
+                            <div class="form-group">
+                                <label for="{{ form.rol.id_for_label }}">Rol</label>
+                                {% if request.COOKIES.user_role == 'superadmin' and form.instance.rol == 'superadmin' %}
+                                    <!-- Si el rol actual es superadmin y el rol editado también es superadmin -->
+                                    <input type="text" class="form-control" value="{{ form.rol.value|capfirst }}" readonly>
+                                {% else %}
+                                    <select class="form-control {% if form.rol.errors %}is-invalid{% endif %}"
+                                            id="{{ form.rol.id_for_label }}"
+                                            name="rol">
+                                        {% if request.COOKIES.user_role == 'superadmin' %}
+                                            <!-- Superadmin puede seleccionar cualquier rol -->
+                                            <option value="admin" {% if form.rol.value == 'admin' %}selected{% endif %}>Administrador</option>
+                                            <option value="operario" {% if form.rol.value == 'operario' %}selected{% endif %}>Operario</option>
+                                            <option value="auditor" {% if form.rol.value == 'auditor' %}selected{% endif %}>Auditor</option>
+                                        {% else %}
+                                            <!-- Admin puede seleccionar cualquier rol excepto admin o superadmin -->
+                                            <option value="operario" {% if form.rol.value == 'operario' %}selected{% endif %}>Operario</option>
+                                            <option value="auditor" {% if form.rol.value == 'auditor' %}selected{% endif %}>Auditor</option>
+                                        {% endif %}
+                                    </select>
+                                {% endif %}
+                                {% if form.rol.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.rol.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+
+                        <div class="card-footer">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <a href="{% url 'administrar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('password-toggle-icon').addEventListener('click', function() {
+        const passwordField = document.getElementById('{{ form.contraseña.id_for_label }}');
+        const icon = document.getElementById('password-toggle-icon');
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            passwordField.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    });
+</script>
+{% endblock %}

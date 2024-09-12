@@ -1,0 +1,129 @@
+{% extends 'adminlte/base_proyectos.html' %}
+
+{% load static %}
+
+{% block title %}
+Administrar Proyectos - {{ block.super }}
+{% endblock %}
+
+{% block page_name %}
+<h1 class="page-title" style="color: rgb(1, 41, 110);">Administrar Proyectos</h1>
+{% endblock %}
+
+{% block content %}
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title">Listado de Proyectos</h3>
+            <div class="d-flex">
+                <a href="{% url 'crear_proyecto' %}" class="btn btn-primary btn-sm mr-2">
+                    <i class="fas fa-plus"></i> Crear Proyecto
+                </a>
+                <a href="{% url 'tableros' %}" class="btn btn-secondary btn-sm mr-2">
+                    <i class="fa fa-columns"></i> Tableros
+                </a>
+            </div>
+        </div>
+        <form method="GET" class="input-group mt-3" style="max-width: 400px;">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por tipo proyecto o número" value="{{ query|default:'' }}">
+            <div class="input-group-append">
+                <button type="submit" class="btn btn-outline-primary">
+                    <i class="fas fa-search"></i> Buscar
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Tipo Proyecto</th>
+                        <th>Número</th>
+                        <th class="text-center">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for proyecto in page_obj %}
+                    <tr>
+                        <td>{{ proyecto.tipo_proyecto }}</td>
+                        <td>{{ proyecto.numero }}</td>
+                        <td class="text-center">
+                            <a href="{% url 'editar_proyecto' proyecto.proyecto %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <button class="btn btn-danger btn-sm" onclick="confirmarEliminacion('{{ proyecto.proyecto }}')">
+                                <i class="fas fa-trash-alt"></i> Eliminar
+                            </button>
+                            <form id="eliminarProyectoForm_{{ proyecto.proyecto }}" style="display: none;" action="{% url 'eliminar_proyecto' proyecto.proyecto %}" method="post">
+                                {% csrf_token %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="text-center">No hay proyectos registrados</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
+                    </li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmarEliminacion(proyectoId) {
+        if (confirm('¿Estás seguro de que deseas eliminar este proyecto?')) {
+            document.getElementById('eliminarProyectoForm_' + proyectoId).submit();
+        }
+    }
+</script>
+{% endblock %}

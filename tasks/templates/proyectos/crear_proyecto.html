@@ -1,0 +1,64 @@
+{% extends 'adminlte/base_proyectos.html' %}
+
+{% block title %}
+    Crear Proyecto - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Crear Proyecto</h3>
+                    </div>
+                    
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="{{ form.tipo_proyecto.id_for_label }}">Tipo Proyecto</label>
+                                <select class="form-control {% if form.tipo_proyecto.errors %}is-invalid{% endif %}" id="{{ form.tipo_proyecto.id_for_label }}" name="tipo_proyecto">
+                                    <option value="">Seleccione un tipo de proyecto</option>
+                                    <option value="OT" {% if form.tipo_proyecto.value == 'OT' %}selected{% endif %}>OT</option>
+                                    <option value="OI" {% if form.tipo_proyecto.value == 'OI' %}selected{% endif %}>OI</option>
+                                </select>
+                                {% if form.tipo_proyecto.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.tipo_proyecto.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="{{ form.numero.id_for_label }}">Número</label>
+                                <input type="text" class="form-control {% if form.numero.errors %}is-invalid{% endif %}" id="{{ form.numero.id_for_label }}" name="numero" value="{{ form.numero.value|default_if_none:'' }}" placeholder="Ingrese el número del proyecto">
+                                {% if form.numero.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.numero.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>                                                    
+                        </div>
+                        <!-- /.card-body -->
+
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Crear Proyecto</button>
+                            <a href="{% url 'manejo_proyectos' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content -->
+{% endblock %}

@@ -1,0 +1,41 @@
+{% extends 'adminlte/base.html' %}
+{% load static %}
+
+{% block title %}
+Cargar CSV - {{ block.super }}
+{% endblock %}
+
+{% block page_name %}
+    <h1 class="page-title" style="color: rgb(1, 41, 110);">Cargar Archivo CSV</h1>
+{% endblock %}
+
+{% block content %}
+<!-- Carga del archivo CSS estático personalizado -->
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">Subir Archivo CSV</h3>
+    </div>
+    <!-- /.card-header -->
+
+    <div class="card-body">
+        <!-- Formulario para cargar archivo CSV -->
+        <form action="{% url 'cargar_csv' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="csv_file">Selecciona un archivo CSV:</label>
+                <input type="file" id="csv_file" name="csv_file" class="form-control-file" required>
+            </div>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-upload"></i> Cargar CSV
+            </button>
+            <a href="{% url 'tableros' %}" class="btn btn-secondary">
+                <i class="fas fa-times"></i> Cancelar
+            </a>
+        </form>
+    </div>
+    <!-- /.card-body -->
+</div>
+<!-- /.card -->
+{% endblock %}

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advertencia: Stock Bajo de Cables</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            background-color: #f7f7f7;
+        }
+        .email-wrapper {
+            width: 100%;
+            padding: 20px;
+            background-color: #f7f7f7;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            padding-bottom: 20px;
+        }
+        .header h1 {
+            margin: 0;
+            color: #333;
+            font-size: 24px;
+        }
+        .alert {
+            padding: 15px;
+            background-color: #ffdddd;
+            color: #d8000c;
+            border-radius: 5px;
+            border: 1px solid #d8000c;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th {
+            background-color: #f4f4f4;
+            color: #333;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .footer {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+            text-align: center;
+        }
+        .footer a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-wrapper">
+        <div class="email-container">
+            <div class="header">
+                <h1>Advertencia de Stock Bajo</h1>
+            </div>
+            <div class="alert">
+                <strong>¡Advertencia!</strong> El stock de algunos cables está por debajo del mínimo requerido.
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Referencia</th>
+                        <th>Descripción</th>
+                        <th>Cantidad Restante</th>
+                        <th>Stock Mínimo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>{{ cable.referencia }}</td>
+                        <td>{{ cable.descripcion }}</td>
+                        <td>{{ cable.cantidad_restante }}</td>
+                        <td>{{ cable.stock_minimo }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p>Por favor, revise el stock y tome las acciones necesarias para reponer los niveles adecuados.</p>
+            <p>Gracias por su atención.</p>
+        </div>
+    </div>
+</body>
+</html>

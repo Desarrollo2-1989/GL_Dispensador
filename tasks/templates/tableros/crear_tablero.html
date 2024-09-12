@@ -1,0 +1,70 @@
+{% extends 'adminlte/base_tableros.html' %}
+
+{% block title %}
+    Crear Tablero - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Crear Tablero</h3>
+                    </div>
+
+                    <form method="POST" action="{% url 'crear_tablero' %}">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <!-- Campo Item -->
+                            <div class="form-group">
+                                <label for="{{ form.item.id_for_label }}">Item</label>
+                                <input type="number" class="form-control {% if form.item.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.item.id_for_label }}" name="item" 
+                                       value="{{ form.item.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese el código del item">
+                                {% if form.item.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.item.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Proyecto Asociado -->
+                            <div class="form-group">
+                                <label for="{{ form.proyecto.id_for_label }}">Proyecto Asociado</label>
+                                <select class="form-control {% if form.proyecto.errors %}is-invalid{% endif %}" 
+                                        id="{{ form.proyecto.id_for_label }}" name="proyecto">
+                                    <option value="">Seleccione un proyecto</option>
+                                    {% for proyecto in form.proyecto.field.queryset %}
+                                        <option value="{{ proyecto.pk }}" 
+                                                {% if form.proyecto.value == proyecto.pk|stringformat:"s" %}selected{% endif %}>
+                                            {{ proyecto.proyecto }} 
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.proyecto.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.proyecto.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg btn-custom">Crear Tablero</button>
+                            <a href="{% url 'tableros' %}" class="btn btn-secondary btn-lg btn-custom">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

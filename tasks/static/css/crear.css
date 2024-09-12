@@ -1,0 +1,25 @@
+/* superA.css */
+
+/* Estilo para la tarjeta del formulario */
+.card-custom {
+    border: 1px solid #007bff; /* Bordes personalizados */
+    border-radius: 0.5rem; /* Bordes redondeados */
+}
+
+/* Estilo para el encabezado de la tarjeta */
+.bg-custom-header {
+    background-color: #007bff; /* Color de fondo personalizado */
+    color: #fff; /* Color de texto */
+}
+
+/* Botones grandes y estilizados */
+.btn-lg {
+    font-size: 1.25rem; /* Tamaño de fuente grande */
+    padding: 0.75rem 1.25rem; /* Espaciado interno grande */
+    border-radius: 0.3rem; /* Bordes redondeados */
+}
+
+/* Centrar contenido en el pie de la tarjeta */
+.card-footer.text-center {
+    text-align: center;
+}

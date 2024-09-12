@@ -1,0 +1,165 @@
+{% extends 'adminlte/base.html' %}
+
+{% block title %}
+    Crear Usuario - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Crear Usuario</h3>
+                    </div>
+                    <!-- /.card-header -->
+                    
+                    <!-- Inicio del formulario -->
+                    <form role="form" method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <!-- Campo Cédula -->
+                            <div class="form-group">
+                                <label for="{{ form.cedula.id_for_label }}">Cédula</label>
+                                <input type="number" 
+                                       class="form-control {% if form.cedula.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.cedula.id_for_label }}" 
+                                       name="cedula" 
+                                       value="{{ form.cedula.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese la cédula">
+                                {% if form.cedula.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cedula.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Campo Nombre Completo -->
+                            <div class="form-group">
+                                <label for="{{ form.nombre_persona.id_for_label }}">Nombre Completo</label>
+                                <input type="text" 
+                                       class="form-control {% if form.nombre_persona.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.nombre_persona.id_for_label }}" 
+                                       name="nombre_persona" 
+                                       value="{{ form.nombre_persona.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese el nombre completo">
+                                {% if form.nombre_persona.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nombre_persona.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Campo Nombre de Usuario -->
+                            <div class="form-group">
+                                <label for="{{ form.nombre_usuario.id_for_label }}">Nombre de Usuario</label>
+                                <input type="text" 
+                                       class="form-control {% if form.nombre_usuario.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.nombre_usuario.id_for_label }}" 
+                                       name="nombre_usuario" 
+                                       value="{{ form.nombre_usuario.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese el nombre de usuario">
+                                {% if form.nombre_usuario.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.nombre_usuario.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Campo Contraseña -->
+                            <div class="form-group position-relative">
+                                <label for="{{ form.contraseña.id_for_label }}">Contraseña</label>
+                                <div class="input-group">
+                                    <input type="password" 
+                                           class="form-control {% if form.contraseña.errors %}is-invalid{% endif %}" 
+                                           id="{{ form.contraseña.id_for_label }}" 
+                                           name="contraseña" 
+                                           value="{{ form.contraseña.value|default_if_none:'' }}" 
+                                           placeholder="Ingrese la contraseña">
+                                    <div class="input-group-append">
+                                        <span class="input-group-text">
+                                            <i class="fas fa-eye-slash" id="password-toggle-icon"></i>
+                                        </span>
+                                    </div>
+                                    {% if form.contraseña.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.contraseña.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Campo Rol -->
+                            <div class="form-group">
+                                <label for="{{ form.rol.id_for_label }}">Rol</label>
+                                <select class="form-control {% if form.rol.errors %}is-invalid{% endif %}" 
+                                        id="{{ form.rol.id_for_label }}" 
+                                        name="rol">
+                                    <option value="">Seleccione un rol</option>
+                                    {% for value, label in form.fields.rol.choices %}
+                                        {% if request.COOKIES.user_role == 'superadmin' %}
+                                            {% if value != 'superadmin' %}
+                                                <option value="{{ value }}" {% if form.rol.value == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
+                                        {% elif request.COOKIES.user_role == 'admin' %}
+                                            {% if value != 'superadmin' %}
+                                                <option value="{{ value }}" {% if form.rol.value == value %}selected{% endif %}>{{ label }}</option>
+                                            {% endif %}
+                                        {% else %}
+                                            <option value="{{ value }}" {% if form.rol.value == value %}selected{% endif %}>{{ label }}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                                {% if form.rol.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.rol.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+
+                        <!-- Pie de la tarjeta con botones -->
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Crear Usuario</button>
+                            <a href="{% url 'administrar_usuarios' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- Enlace a Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<script>
+    document.getElementById('password-toggle-icon').addEventListener('click', function() {
+        const passwordField = document.getElementById('{{ form.contraseña.id_for_label }}');
+        const icon = document.getElementById('password-toggle-icon');
+        if (passwordField.type === 'password') {
+            passwordField.type = 'text';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            passwordField.type = 'password';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends 'adminlte/base_cables.html' %}
+
+{% block title %}
+    Editar Cable - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Editar Cable</h3>
+                    </div>
+
+                    <!-- Inicio del formulario -->
+                    <form role="form" method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <!-- Campo Referencia -->
+                            <div class="form-group">
+                                <label for="{{ form.referencia.id_for_label }}">Referencia</label>
+                                <input type="text" class="form-control {% if form.referencia.errors %}is-invalid{% endif %}" id="{{ form.referencia.id_for_label }}" name="referencia" value="{{ form.referencia.value|default_if_none:'' }}" placeholder="Ingrese la referencia del cable" readonly>
+                                {% if form.referencia.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.referencia.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Descripción -->
+                            <div class="form-group">
+                                <label for="{{ form.descripcion.id_for_label }}">Descripción</label>
+                                <input type="text" class="form-control {% if form.descripcion.errors %}is-invalid{% endif %}" id="{{ form.descripcion.id_for_label }}" name="descripcion" value="{{ form.descripcion.value|default_if_none:'' }}" placeholder="Ingrese la descripción del cable">
+                                {% if form.descripcion.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.descripcion.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Cantidad Inicial -->
+                            <div class="form-group">
+                                <label for="{{ form.cantidad_inicial.id_for_label }}">Cantidad Inicial (m)</label>
+                                <input type="number" class="form-control {% if form.cantidad_inicial.errors %}is-invalid{% endif %}" id="{{ form.cantidad_inicial.id_for_label }}" name="cantidad_inicial" value="{{ form.cantidad_inicial.value|default_if_none:'' }}" placeholder="Ingrese la cantidad inicial">
+                                {% if form.cantidad_inicial.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cantidad_inicial.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <!-- Campo Stock Mínimo -->
+                            <div class="form-group">
+                                <label for="{{ form.stock_minimo.id_for_label }}">Stock Mínimo (m)</label>
+                                <input type="number" class="form-control {% if form.stock_minimo.errors %}is-invalid{% endif %}" id="{{ form.stock_minimo.id_for_label }}" name="stock_minimo" value="{{ form.stock_minimo.value|default_if_none:'' }}" placeholder="Ingrese el stock mínimo permitido">
+                                {% if form.stock_minimo.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.stock_minimo.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+
+                        <!-- Pie de la tarjeta con botones -->
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Actualizar Cable</button>
+                            <a href="{% url 'cables' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content -->
+{% endblock %}

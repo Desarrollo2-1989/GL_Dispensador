@@ -1,0 +1,68 @@
+/* Cambiar el color de fondo del sidebar a un azul oscuro */
+.main-sidebar.sidebar-dark-primary {
+    background-color: #003366; /* Azul oscuro */
+}
+
+/* Logo de la marca */
+.brand-link {
+    background-color: #002244; /* Un tono más oscuro para el fondo del logo */
+}
+
+/* Estilos para el panel del usuario */
+.user-panel {
+    border-bottom: 1px solid #004080; /* Línea separadora */
+}
+
+.user-panel .info a {
+    color: #ffffff; /* Texto blanco para mejor contraste */
+}
+
+/* Estilos para el menú de navegación */
+.nav-sidebar .nav-link {
+    color: #d1d1d1; /* Color de texto del enlace */
+}
+
+.nav-sidebar .nav-link.active,
+.nav-sidebar .nav-link:hover {
+    background-color: #004080; /* Color de fondo cuando se selecciona o se pasa el cursor sobre el enlace */
+    color: #ffffff; /* Texto blanco cuando se selecciona o se pasa el cursor */
+}
+
+.nav-sidebar .nav-item .nav-icon {
+    color: #ffffff; /* Color de los iconos en el menú */
+}
+
+
+
+
+/* Cambiar el color de fondo del nav a azul oscuro */
+.main-header {
+    background-color: #002244; /* Azul oscuro */
+}
+
+/* Color del texto y iconos en el header */
+.main-header .navbar-nav .nav-link {
+    color: #ffffff; /* Blanco para mejor contraste */
+}
+
+.main-header .navbar-nav .nav-link:hover {
+    color: #d1d1d1; /* Color más claro al pasar el cursor sobre el enlace */
+}
+
+.main-header .navbar-nav .nav-link .fas {
+    color: #ffffff; /* Color blanco para los iconos */
+}
+
+/* Asegúrate de que el logo tenga un fondo adecuado */
+.brand-link {
+    background-color: #002244; /* Un tono más oscuro para el fondo del logo */
+}
+
+.brand-link .brand-text {
+    color: #ffffff; /* Color blanco para el texto del logo */
+}
+
+
+
+
+

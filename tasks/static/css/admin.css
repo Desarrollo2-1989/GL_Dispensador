@@ -1,0 +1,96 @@
+/* Estilos generales */
+.page-title {
+    color: #047cf4; /* Color azul oscuro para el título */
+    font-size: 28px; /* Tamaño de fuente más grande */
+    font-weight: bold; /* Negrita para el título */
+    margin-bottom: 20px; /* Espacio debajo del título */
+}
+
+/* Estilo de la tarjeta */
+.card {
+    border: 1px solid #ddd; /* Borde gris claro */
+    border-radius: 8px; /* Bordes redondeados */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Sombra suave */
+    margin-bottom: 20px; /* Espacio debajo de la tarjeta */
+}
+
+/* Encabezado de la tarjeta */
+.card-header {
+    background-color: #9eaeb9; /* Fondo azul oscuro */
+    color: #000000; /* Texto blanco */
+    border-bottom: 1px solid #ddd; /* Borde inferior gris claro */
+    padding: 15px; /* Espaciado interno */
+}
+
+/* Botones */
+.btn-primary {
+    background-color: #004080; /* Fondo azul oscuro */
+    border-color: #004080; /* Borde azul oscuro */
+    color: #ffffff; /* Texto blanco */
+}
+
+.btn-primary:hover {
+    background-color: #003366; /* Fondo azul más oscuro al pasar el ratón */
+    border-color: #003366; /* Borde azul más oscuro */
+}
+
+.btn-outline-primary {
+    color: #004080; /* Texto azul oscuro */
+    border-color: #004080; /* Borde azul oscuro */
+}
+
+.btn-outline-primary:hover {
+    background-color: #004080; /* Fondo azul oscuro al pasar el ratón */
+    color: #ffffff; /* Texto blanco */
+}
+
+/* Tabla */
+.table {
+    border-collapse: separate; /* Colapsar bordes */
+    border-spacing: 0; /* Espaciado entre celdas */
+    width: 100%; /* Ancho completo */
+}
+
+.table th, .table td {
+    padding: 12px; /* Espaciado interno */
+    text-align: left; /* Alinear texto a la izquierda */
+    border-bottom: 1px solid #ddd; /* Borde inferior gris claro */
+}
+
+.table thead th {
+    background-color: #000000; /* Fondo azul oscuro */
+    color: #ffffff; /* Texto blanco */
+    font-weight: bold; /* Negrita para encabezados */
+}
+
+.table tbody tr:nth-of-type(even) {
+    background-color: #f9f9f9; /* Fondo gris claro para filas pares */
+}
+
+.table tbody tr:hover {
+    background-color: #e9ecef; /* Fondo gris claro al pasar el ratón */
+}
+
+/* Paginación */
+.pagination {
+    margin-top: 20px; /* Espacio arriba de la paginación */
+}
+
+.page-item.active .page-link {
+    background-color: #003366; /* Fondo azul oscuro para la página activa */
+    border-color: #003366; /* Borde azul oscuro */
+    color: #ffffff; /* Texto blanco */
+}
+
+.page-link {
+    color: #004080; /* Texto azul oscuro */
+    padding: 10px 15px; /* Espaciado interno */
+    border-radius: 4px; /* Bordes redondeados */
+    border: 1px solid #ddd; /* Borde gris claro */
+}
+
+.page-link:hover {
+    background-color: #f1f1f1; /* Fondo gris claro al pasar el ratón */
+    color: #003366; /* Texto azul oscuro */
+}
+
