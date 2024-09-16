@@ -56,35 +56,37 @@ class Tableros(models.Model):
         unique_together = ('proyecto', 'item')  # Asegurar que el item sea único por proyecto
 
 class Cables(models.Model):
-    referencia = models.IntegerField(primary_key=True)
-    descripcion = models.CharField(max_length=200)
-    cantidad_inicial = models.IntegerField()
-    cantidad_restante = models.IntegerField(default=0)
-    stock_minimo = models.IntegerField(default=1)
-    ultima_advertencia = models.DateTimeField(null=True, blank=True)
+    # Atributos
+    referencia = models.IntegerField(primary_key=True)  # Clave primaria
+    descripcion = models.CharField(max_length=200)  # Descripción del cable
+    cantidad_inicial = models.IntegerField()  # Cantidad inicial del cable
+    cantidad_restante = models.IntegerField(default=0)  # Cantidad restante del cable
+    stock_minimo = models.IntegerField(default=1)  # Stock mínimo del cable
+    ultima_advertencia = models.DateTimeField(null=True, blank=True)  # Fecha de la última advertencia
 
-    def save(self, *args, **kwargs):
+    # Métodos
+    def save(self, *args, **kwargs):  # Método para guardar el objeto
         if self.pk is None:
             self.cantidad_restante = self.cantidad_inicial
         super().save(*args, **kwargs)
 
-    def actualizar_cantidad_restante(self, cantidad_dispensada):
+    def actualizar_cantidad_restante(self, cantidad_dispensada):  # Método para actualizar la cantidad restante
         if cantidad_dispensada > self.cantidad_restante:
             raise ValueError("La cantidad dispensada no puede ser mayor que la cantidad restante.")
         self.cantidad_restante -= cantidad_dispensada
         self.save()
 
-    def verificar_stock_minimo(self):
+    def verificar_stock_minimo(self):  # Método para verificar el stock mínimo
         return self.cantidad_restante < self.stock_minimo
 
-    def necesita_advertencia(self):
+    def necesita_advertencia(self):  # Método para verificar si se necesita una advertencia
         if self.verificar_stock_minimo():
             if self.ultima_advertencia is None or timezone.now() - self.ultima_advertencia > timezone.timedelta(days=1):
                 return True
         return False
 
-    def __str__(self):
+    def __str__(self):  # Método para representar el objeto como string
         return f"{self.referencia} - {self.descripcion} - Cantidad Restante: {self.cantidad_restante}"
 
     class Meta:
-        db_table = 'cables'
+        db_table = 'cables'  # Nombre de la tabla en la base de datos

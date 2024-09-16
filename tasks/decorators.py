@@ -1,6 +1,7 @@
 from django.shortcuts import redirect
 from functools import wraps
 
+# Decorador para verificar el rol del usuario
 def verificar_rol(*roles_permitidos):
     def decorator(view_func):
         @wraps(view_func)

@@ -49,7 +49,7 @@ urlpatterns = [
     path('editar_cable/<str:referencia>/', views.editar_cable, name='editar_cable'),
     path('eliminar_cable/<str:referencia>/', views.eliminar_cable, name='eliminar_cable'),
     
-    #Rutas para operario
+    # Rutas para operario
     path('ver_items_proyecto/<str:proyecto_id>/', views.ver_items_proyecto, name='ver_items_proyecto'),
     path('tableros/<str:tablero_id>/cables/', views.ver_cables_tablero, name='ver_cables_tablero'),
 ]

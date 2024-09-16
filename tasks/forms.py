@@ -4,11 +4,16 @@ from django.utils.translation import gettext_lazy as _
 from django.core.exceptions import ValidationError
 
 
+# Formulario de inicio de sesión
 class LoginForm(forms.Form):
+    # Campo para el nombre de usuario
     nombre_usuario = forms.CharField(max_length=50, label='Nombre de usuario')
+    # Campo para la contraseña
     contraseña = forms.CharField(widget=forms.PasswordInput, label='Contraseña')
-    
+
+# Formulario para crear/editar un usuario
 class UsuarioForm(forms.ModelForm):
+    # Opciones para el rol del usuario
     ROLES = [
         ('superadmin', 'SuperAdmin'),
         ('admin', 'Administrador'),
@@ -16,17 +21,21 @@ class UsuarioForm(forms.ModelForm):
         ('auditor', 'Auditor')
     ]
 
+    # Campo para la contraseña (opcional)
     contraseña = forms.CharField(
         widget=forms.PasswordInput,
         required=False,
         help_text="Ingrese una nueva contraseña solo si desea cambiarla."
     )
 
+    # Método para inicializar el formulario
     def __init__(self, *args, **kwargs):
+        # Obtener el rol del usuario actual
         request = kwargs.pop('request', None)
         super().__init__(*args, **kwargs)
         self.request = request
 
+        # Configurar el campo de rol según el rol del usuario actual
         if self.instance.pk:
             self.fields['contraseña'].required = False
 
@@ -53,6 +62,7 @@ class UsuarioForm(forms.ModelForm):
             else:
                 self.fields['rol'].choices = self.ROLES
 
+    # Configuración del formulario
     class Meta:
         model = Usuarios
         fields = ['cedula', 'nombre_persona', 'nombre_usuario', 'contraseña', 'rol']
@@ -64,6 +74,7 @@ class UsuarioForm(forms.ModelForm):
             'rol': 'Rol',
         }
 
+    # Método para validar la cédula
     def clean_cedula(self):
         cedula = self.cleaned_data.get('cedula')
 
@@ -72,6 +83,7 @@ class UsuarioForm(forms.ModelForm):
 
         return cedula
 
+    # Método para validar la contraseña
     def clean(self):
         cleaned_data = super().clean()
         contraseña = cleaned_data.get('contraseña')
@@ -81,6 +93,7 @@ class UsuarioForm(forms.ModelForm):
 
         return cleaned_data
 
+    # Método para validar el rol
     def clean_rol(self):
         rol = self.cleaned_data.get('rol')
         if self.request:
@@ -90,8 +103,10 @@ class UsuarioForm(forms.ModelForm):
                 raise forms.ValidationError('No tienes permisos para crear administradores o superadministradores.')
 
         return rol
-        
+
+# Formulario para crear/editar un proyecto
 class ProyectoForm(forms.ModelForm):
+    # Configuración del formulario
     class Meta:
         model = Proyectos
         fields = ['numero', 'tipo_proyecto']
@@ -110,6 +125,7 @@ class ProyectoForm(forms.ModelForm):
             },
         }
 
+    # Método para validar el número del proyecto
     def clean_numero(self):
         numero = self.cleaned_data.get('numero')
         
@@ -123,6 +139,7 @@ class ProyectoForm(forms.ModelForm):
         
         return numero
 
+    # Método para validar la existencia de un proyecto con el mismo número y tipo
     def clean(self):
         cleaned_data = super().clean()
         numero = cleaned_data.get('numero')
@@ -144,8 +161,10 @@ class ProyectoForm(forms.ModelForm):
                 self.add_error('numero', _("Ya existe un proyecto con este Número y Tipo de Proyecto."))
 
         return cleaned_data
-        
+
+# Formulario para crear/editar un tablero
 class TablerosForm(forms.ModelForm):
+    # Configuración del formulario
     class Meta:
         model = Tableros
         fields = ['proyecto', 'item']
@@ -162,10 +181,12 @@ class TablerosForm(forms.ModelForm):
             },
         }
 
+    # Método para inicializar el formulario
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['proyecto'].queryset = Proyectos.objects.all()
 
+    # Método para validar el item
     def clean_item(self):
         item = self.cleaned_data.get('item')
 
@@ -175,6 +196,7 @@ class TablerosForm(forms.ModelForm):
 
         return item
 
+     # Método para validar la existencia de un tablero con el mismo proyecto y item
     def clean(self):
         cleaned_data = super().clean()
         proyecto = cleaned_data.get('proyecto')
@@ -196,8 +218,10 @@ class TablerosForm(forms.ModelForm):
                 self.add_error('item', "Ya existe un tablero con este item para el proyecto seleccionado.")
 
         return cleaned_data
-                     
+
+# Formulario para crear/editar un cable
 class CableForm(forms.ModelForm):
+    # Configuración del formulario
     class Meta:
         model = Cables
         fields = ['referencia', 'descripcion', 'cantidad_inicial', 'stock_minimo', 'ultima_advertencia']
@@ -236,6 +260,7 @@ class CableForm(forms.ModelForm):
             'ultima_advertencia': 'Última Advertencia',
         }
 
+    # Método para validar la cantidad inicial y el stock mínimo
     def clean(self):
         cleaned_data = super().clean()
         cantidad_inicial = cleaned_data.get("cantidad_inicial")
@@ -246,4 +271,3 @@ class CableForm(forms.ModelForm):
                 self.add_error('cantidad_inicial', 'La cantidad inicial no puede ser menor que el stock mínimo.')
                 
         return cleaned_data
-        
