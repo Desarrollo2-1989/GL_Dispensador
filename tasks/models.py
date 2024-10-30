@@ -2,11 +2,12 @@ from django.db import models
 from django.utils import timezone
 
 class Usuarios(models.Model):
-    cedula = models.CharField(max_length=10, primary_key=True)  # Identificador único del usuario
+    cedula = models.CharField(max_length=20, primary_key=True)  # Identificador único del usuario
     nombre_persona = models.CharField(max_length=50)  # Nombre completo de la persona
     nombre_usuario = models.CharField(max_length=50, unique=True)  # Nombre de usuario único
     contraseña = models.CharField(max_length=100)  # Contraseña del usuario
     rol = models.CharField(max_length=20)  # Rol del usuario en el sistema
+    estado = models.BooleanField(default=True)  # Estado del usuario (True = Activo, False = Inactivo)
 
     def __str__(self):
         return self.nombre_usuario
@@ -56,7 +57,6 @@ class Tableros(models.Model):
         unique_together = ('proyecto', 'item')  # Asegurar que el item sea único por proyecto
 
 class Cables(models.Model):
-    # Atributos
     referencia = models.IntegerField(primary_key=True)  # Clave primaria
     descripcion = models.CharField(max_length=200)  # Descripción del cable
     cantidad_inicial = models.IntegerField()  # Cantidad inicial del cable
@@ -90,3 +90,40 @@ class Cables(models.Model):
 
     class Meta:
         db_table = 'cables'  # Nombre de la tabla en la base de datos
+        
+class MensajePruebaDP(models.Model):
+    mensaje = models.TextField()
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Mensaje Prueba-DP recibido el {self.fecha}: {self.mensaje}"
+    
+    class Meta:
+        db_table = 'topic1'  # Nombre de la tabla en la base de datos
+        
+
+class RegistroDispensa(models.Model):
+    cable = models.ForeignKey(Cables, on_delete=models.CASCADE)  # Relación con el modelo de Cables
+    cantidad_dispensada = models.FloatField()  # Cantidad de cable dispensada
+    fecha = models.DateTimeField(auto_now_add=True)  # Fecha de la dispensación
+    proyecto = models.ForeignKey(Proyectos, on_delete=models.CASCADE)  # Relación con el modelo Proyectos
+    tablero = models.ForeignKey(Tableros, on_delete=models.CASCADE)  # Relación con el modelo Tableros
+    cantidad_restante_despues = models.IntegerField(default=0)
+    usuario = models.ForeignKey(Usuarios, on_delete=models.CASCADE, null=True)
+    
+
+    def __str__(self):
+        return f"{self.cantidad_dispensada} metros de cable dispensados el {self.fecha} para el proyecto {self.proyecto} en el tablero {self.tablero}"
+
+    class Meta:
+        db_table = 'registro_dispensas'  # Nombre de la tabla en la base de datos
+        
+             
+class DestinatarioCorreo(models.Model):
+    correo = models.EmailField(unique=True)
+
+    def __str__(self):
+        return self.correo
+    
+
+        

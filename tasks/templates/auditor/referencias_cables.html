@@ -1,0 +1,93 @@
+{% extends 'auditor/base.html' %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'ver_tableros_proyecto' proyecto %}" class="btn btn-secondary" style="margin-left: 20px;">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
+<div class="card">
+    <h1 class="page-title text-center mb-4">Referencias de Cables del Tablero {{ tablero }}</h1>
+
+    <!-- Tabla de datos -->
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Referencia de Cable</th>
+                    <th>Cantidad Total Referencia (metros)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for referencia_cable in referencias_cables %}
+                <tr>
+                    <td>{{ referencia_cable.cable__referencia }}</td>
+                    <td>{{ referencia_cable.total_dispensada }}</td>
+                </tr>
+                {% endfor %}
+                {% if referencias_cables.count == 0 %}
+                <tr>
+                    <td colspan="2" class="text-center">No se encontraron referencias de cables.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<!-- Gráfica -->
+<div class="mt-5" style="max-width: 1100px; margin: auto;">
+    <canvas id="cableChart" width="800" height="300"></canvas> <!-- Ancho y alto aumentados -->
+</div>
+</div>
+
+<!-- Incluir Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Datos de la gráfica que vienen desde la vista en formato JSON
+    const referencias = JSON.parse("{{ referencias_json|escapejs }}");
+    const totales = JSON.parse("{{ totales_json|escapejs }}");
+    const totalGeneral = "{{ total_dispensado_general }}"; // Total general desde el contexto
+
+    // Crear la gráfica usando Chart.js
+    const ctx = document.getElementById("cableChart").getContext("2d");
+    const cableChart = new Chart(ctx, {
+        type: "bar",  // Tipo de gráfica de barras
+        data: {
+            labels: referencias,  // Etiquetas (referencias de cables)
+            datasets: [
+                {
+                    label: "Total Cable Dispensado (metros)",
+                    data: totales,  // Datos (total dispensado)
+                    backgroundColor: "rgba(75, 192, 192, 0.2)",  // Color de las barras
+                    borderColor: "rgba(75, 192, 192, 1)",  // Color del borde de las barras
+                    borderWidth: 1,  // Grosor del borde
+                },
+            ],
+        },
+        options: {
+            maintainAspectRatio: false,  // Permitir ajuste de tamaño personalizado
+            responsive: true,  // Hacer la gráfica responsiva
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Total General: ${totalGeneral} metros`, // Mostrar el total general en el título de la gráfica
+                    padding: {
+                        top: 10,
+                        bottom: 30,
+                    },
+                    font: {
+                        size: 16, // Tamaño del texto
+                    },
+                    color: "#333", // Color del texto del título
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,  // Comenzar en 0 en el eje Y
+                },
+            },
+        },
+    });
+</script>
+{% endblock %}

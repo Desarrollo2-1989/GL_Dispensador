@@ -1,0 +1,162 @@
+<!-- Extiende la plantilla base 'adminlte/base_proyectos.html' -->
+{% extends 'adminlte/base_proyectos.html' %}
+
+<!-- Carga los archivos estáticos -->
+{% load static %}
+
+<!-- Define el título de la página -->
+{% block title %}
+  Administrar Destinatarios - {{ block.super }}
+{% endblock %}
+
+<!-- Define el nombre de la página -->
+{% block page_name %}
+  <!-- Muestra el nombre de la página -->
+  <h1 class="page-title" style="color: rgb(1, 41, 110);">Administrar Correos</h1>
+{% endblock %}
+
+<!-- Define el contenido de la página -->
+{% block content %}
+  <!-- Carga el archivo de estilos CSS personalizado -->
+  <link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+  <!-- Contenedor de la tarjeta -->
+  <div class="card">
+    <!-- Cabecera de la tarjeta -->
+    <div class="card-header">
+      <!-- Contenedor de la cabecera -->
+      <div class="d-flex justify-content-between align-items-center">
+        <!-- Título de la tarjeta -->
+        <h3 class="card-title">Listado de Destinatarios</h3>
+        <!-- Botones de acción -->
+        <div class="d-flex">
+          <!-- Botón para crear un nuevo destinatario -->
+          <a href="{% url 'crear_destinatario' %}" class="btn btn-primary btn-sm mr-2">
+            <i class="fas fa-plus"></i> Crear Destinatario
+          </a>
+        </div>
+      </div>
+      <!-- Formulario de búsqueda -->
+      <form method="GET" class="input-group mt-3" style="max-width: 400px;">
+        <!-- Campo de búsqueda -->
+        <input type="text" name="q" class="form-control" placeholder="Buscar por nombre o correo" value="{{ query|default:'' }}">
+        <!-- Botón de búsqueda -->
+        <div class="input-group-append">
+          <button type="submit" class="btn btn-outline-primary">
+            <i class="fas fa-search"></i> Buscar
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Cuerpo de la tarjeta -->
+    <div class="card-body">
+      <!-- Contenedor de la tabla -->
+      <div class="table-responsive">
+        <!-- Tabla de destinatarios -->
+        <table class="table table-hover table-striped">
+          <!-- Cabecera de la tabla -->
+          <thead>
+            <tr>
+              <!-- Columnas de la tabla -->
+              <th>Correo Electrónico</th>
+              <th class="text-center">Acciones</th>
+            </tr>
+          </thead>
+          <!-- Cuerpo de la tabla -->
+          <tbody>
+            <!-- Itera sobre los destinatarios -->
+            {% for destinatario in page_obj %}
+            <tr>
+              <!-- Muestra el correo electrónico del destinatario -->
+              <td>{{ destinatario.correo }}</td>
+              <!-- Acciones del destinatario -->
+              <td class="text-center">
+                <!-- Botón para editar el destinatario -->
+                <a href="{% url 'editar_destinatario' destinatario.id %}" class="btn btn-info btn-sm">
+                  <i class="fas fa-edit"></i> Editar
+                </a>
+                <!-- Botón para eliminar el destinatario -->
+                <button class="btn btn-danger btn-sm" onclick="confirmarEliminacion('{{ destinatario.id }}')">
+                  <i class="fas fa-trash-alt"></i> Eliminar
+                </button>
+                <!-- Formulario para eliminar el destinatario -->
+                <form id="eliminarDestinatarioForm_{{ destinatario.id }}" style="display: none;" action="{% url 'eliminar_destinatario' destinatario.id %}" method="post">
+                  {% csrf_token %}
+                </form>
+              </td>
+            </tr>
+            {% empty %}
+            <!-- Muestra un mensaje si no hay destinatarios -->
+            <tr>
+              <td colspan="3" class="text-center">No hay destinatarios registrados</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div class="mt-4">
+        <nav aria-label="Page navigation">
+          <ul class="pagination justify-content-center">
+            <!-- Botón para ir a la primera página -->
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="First">
+                <span aria-hidden="true">&laquo;&laquo;</span>
+              </a>
+            </li>
+            <!-- Botón para ir a la página anterior -->
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+              </a>
+            </li>
+            {% endif %}
+
+            <!-- Itera sobre las páginas -->
+            {% for num in page_obj.paginator.page_range %}
+            {% if page_obj.number == num %}
+            <!-- Muestra la página actual -->
+            <li class="page-item active">
+              <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
+            </li>
+            {% else %}
+            <!-- Muestra las demás páginas -->
+            <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+            {% endif %}
+            {% endfor %}
+
+            <!-- Botón para ir a la página siguiente -->
+            {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+              </a>
+            </li>
+            <!-- Botón para ir a la última página -->
+            <li class="page-item">
+              <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                <span aria-hidden="true">&raquo;&raquo;</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </nav>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}
+
+<!-- Bloque para scripts adicionales -->
+{% block extra_js %}
+<script>
+    function confirmarEliminacion(destinatarioId) {
+        if (confirm('¿Estás seguro de que deseas eliminar este destinatario?')) {
+            document.getElementById('eliminarDestinatarioForm_' + destinatarioId).submit();
+        }
+    }
+</script>
+{% endblock %}

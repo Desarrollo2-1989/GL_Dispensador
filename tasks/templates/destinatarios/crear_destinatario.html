@@ -1,0 +1,53 @@
+{% extends 'adminlte/base_proyectos.html' %}
+
+{% block title %}
+    Crear Destinatario - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Crear Destinatario</h3>
+                    </div>
+
+                    <!-- Formulario para crear destinatario -->
+                    <form method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="{{ form.correo.id_for_label }}">Correo Electrónico</label>
+                                <input type="email" class="form-control {% if form.correo.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.correo.id_for_label }}" 
+                                       name="correo" 
+                                       value="{{ form.correo.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese el correo electrónico">
+                                {% if form.correo.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.correo.errors %}
+                                            <p>{{ error }}</p>  <!-- Mostrar el mensaje de error específico aquí -->
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Crear Destinatario</button>
+                            <a href="{% url 'lista_destinatarios' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /.row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content -->
+{% endblock %}

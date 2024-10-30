@@ -1,0 +1,50 @@
+{% load i18n %}
+{% load static %}
+
+<!-- Link to the custom CSS file -->
+<link rel="stylesheet" href="{% static 'admin-lte/dist/css/SuperA.css' %}">
+
+<aside class="main-sidebar sidebar-dark-primary elevation-4">
+    <!-- Brand Logo -->
+    {% block logo %}
+    <a class="brand-link">
+        <img src="{% static 'admin-lte/dist/img/gl.png' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
+        {% block logo_text %}
+        <span class="brand-text font-weight-light">INGENIEROS S.A.</span>
+        {% endblock %}
+    </a>
+    {% endblock %}
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <!-- Sidebar User Panel -->
+        {% block user_panel %}
+        {% endblock %}
+
+        <!-- Sidebar Menu -->
+        {% block nav_links_ul %}
+        <nav class="mt-2">
+            <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                {% block nav_links_outer %}
+                {% block nav_links %}
+                
+                <li class="nav-item">
+                    <a href="{% url 'registros' %}" class="nav-link">
+                        <i class="nav-icon fas fa-users"></i>
+                        <p>Registros</p>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'registros_detallados' %}" class="nav-link">
+                        <i class="nav-icon fas fa-project-diagram"></i>
+                        <p>Registros Detallados</p>
+                    </a>
+                </li>
+                {% endblock %}
+                {% endblock nav_links_outer %}
+            </ul>
+        </nav>
+        {% endblock nav_links_ul %}
+    </div>
+    <!-- /.sidebar -->
+</aside>

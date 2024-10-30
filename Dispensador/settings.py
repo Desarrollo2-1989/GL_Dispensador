@@ -24,7 +24,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-rf58ip&+p!urt_gfc7v2+7pd#mut!gt^@rg-@14e1igmio7qu*'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.8.87'] # Configuración de los hosts permitidos para acceder a la aplicación
 
@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'tasks',
+    'tasks', # Aplicación personalizada llamada "tasks"
 ]
 
 MIDDLEWARE = [
@@ -57,7 +57,7 @@ ROOT_URLCONF = 'Dispensador.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [BASE_DIR / 'templates'],  # Directorio donde se encuentran las plantillas
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -76,14 +76,15 @@ WSGI_APPLICATION = 'Dispensador.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# Configuración de la base de datos
 DATABASES = {
    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "DPC",
-        "USER": "postgres",
-        "PASSWORD": "GL1989",
-        "HOST": "localhost",
-        "PORT": "5438",
+        "ENGINE": "django.db.backends.postgresql", # Motor de base de datos
+        "NAME": "DPC", # Nombre de la base de datos
+        "USER": "postgres", # Usuario de la base de datos
+        "PASSWORD": "GL1989", # Contraseña de la base de datos
+        "HOST": "localhost", # Host de la base de datos
+        "PORT": "5438", # Puerto de la base de datos
     }
 }
 
@@ -112,7 +113,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'America/Bogota'
 
 USE_I18N = True
 

@@ -1,40 +1,97 @@
 body {
-    font-family: 'Roboto', sans-serif;
-    background-image: url("/static/imagenes/Inicio.png");
-    background-size: cover;
-    background-position: center center;
-    margin: 0;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-  }
-  .form-container {
-    background-color: rgba(255, 255, 255, 0.1);
-    padding: 30px;
-    border-radius: 15px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9);
-  }
-  h4 {
-    font-weight: 600;
-    color: #ffffff;
-  }
-  .btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
-    transition: background-color 0.3s, border-color 0.3s;
-  }
-  .btn-primary:hover {
-    background-color: #0056b3;
-    border-color: #004085;
-  }
-  .alert-danger {
-    font-size: 0.9rem;
-    margin-top: 10px;
-  }
-  p {
-    font-size: 0.9rem;
-    color: #000000;
-    margin-top: 20px;
-  }
-  
+  font-family: 'Roboto', sans-serif;
+  background-image: url("/static/imagenes/Inicio.png");
+  background-size: cover;
+  background-position: center center;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.form-container {
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 30px;
+  border-radius: 15px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.9);
+}
+
+h4 {
+  font-weight: 600;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 115, 255, 0.256);
+}
+
+.btn-primary {
+  background-color: #007bff;
+  border-color: #007bff;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.btn-primary:hover {
+  background-color: #0056b3;
+  border-color: #004085;
+}
+
+p {
+  font-size: 0.9rem;
+  color: #000000;
+  margin-top: 20px;
+}
+
+.alert-danger {
+  font-size: 1rem;
+  background-color: rgba(255, 127, 127, 0.587);
+  /* Fondo rojo más suave */
+  color: #430000;
+  /* Texto rojo oscuro para mayor contraste */
+  border: 1px solid rgba(186, 15, 15, 0.5);
+  /* Borde rojo con mayor transparencia */
+  border-radius: 8px;
+  /* Bordes ligeramente redondeados */
+  padding: 12px;
+  /* Mayor espacio interno para legibilidad */
+  margin-top: 15px;
+  box-shadow: 0 3px 6px rgba(255, 0, 0, 0.2);
+  /* Sombra sutil */
+}
+
+.login-title {
+  font-size: 0.75rem;
+  /* Tamaño de fuente más pequeño */
+  color: #ffffff;
+  /* Texto blanco para contraste */
+  width: 100%;
+  max-width: 360px;
+  font-weight: 600;
+  /* Peso de fuente moderado */
+  text-transform: uppercase;
+  /* Texto en mayúsculas */
+  letter-spacing: 1px;
+  /* Espaciado entre letras para mayor claridad */
+  background-color: rgba(0, 123, 255, 0.6);
+  /* Fondo azul suave y transparente */
+  padding: 6px;
+  /* Espacio interno más pequeño */
+  border-radius: 8px;
+  /* Bordes redondeados */
+  box-shadow: 0 3px 10px rgba(2, 50, 122, 0.445);
+  /* Sombra para darle profundidad */
+  transition: background-color 0.3s ease;
+  /* Transición suave al cambiar el fondo */
+  border: 2px solid rgba(0, 58, 112, 0.518);
+  /* Borde */
+}
+
+.login-title:hover {
+  background-color: rgba(0, 55, 110, 0.8);
+  /* Cambia a un azul más oscuro al pasar el ratón */
+}
+
+.form-control:focus {
+  background-color: rgb(222, 237, 255);
+  /* Reflejo azul en el focus */
+  border-color: #00264f;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.119);
+}

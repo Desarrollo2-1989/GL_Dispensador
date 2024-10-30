@@ -1,0 +1,44 @@
+{% extends 'auditor/base.html' %}
+
+{% block content %}
+<!-- Botón para volver atrás -->
+<div class="mb-3">
+    <a href="{% url 'registros' %}" class="btn btn-secondary" style="margin-left: 20px;">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
+<div class="card">
+    <h1 class="page-title text-center mb-4">Tableros del Proyecto {{ proyecto }}</h1>
+
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Tablero</th>
+                    <th>Total Cable tablero (metros)</th>
+                    <th>Referencias de Cables</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tablero in tableros %}
+                <tr>
+                    <td>{{ tablero.tablero__identificador }}</td>
+                    <td>{{ tablero.total_cables_dispensados }}</td>
+                    <td>
+                        <a href="{% url 'ver_referencias_cables' proyecto tablero.tablero__identificador %}"
+                            class="btn btn-info btn-sm">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if tableros.count == 0 %}
+                <tr>
+                    <td colspan="3" class="text-center">No se encontraron tableros.</td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

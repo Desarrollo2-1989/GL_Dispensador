@@ -1,89 +1,117 @@
+<!-- Carga de los tags i18n y static de Django -->
 {% load i18n %}
 {% load static %}
 
+<!-- Declaración del documento HTML -->
 <!DOCTYPE html>
 <html>
 <head>
+    <!-- Bloque para definir el título de la página -->
     {% block title_outer %}
         <title>{% block title %}{{ site.name }}{% endblock %}</title>
     {% endblock %}
 
+    <!-- Bloque para definir los metadatos de la página -->
     {% block meta %}
         <meta charset="utf-8">
         <meta http-equiv="X-UA-COMPATIBLE" content="IE=edge">
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
     {% endblock %}
 
+    <!-- Bloque para incluir los archivos de estilos CSS -->
     {% block stylesheets %}
+        <!-- Incluye el archivo _styles.html desde la carpeta adminlte/components/ -->
         {% include 'adminlte/components/_styles.html' %}
+        <!-- Incluye el archivo SuperA.css desde la carpeta admin-lte/dist/css/ -->
         <link rel="stylesheet" href="{% static 'admin-lte/dist/css/SuperA.css' %}">
     {% endblock %}
 
+    <!-- Bloque para incluir contenido adicional en la cabeza de la página -->
     {% block extra_head %}{% endblock %}
 </head>
+
+<!-- Cuerpo de la página -->
 <body class="hold-transition sidebar-mini {% block body_class %}{% block bodyclass %}{% endblock %}{% endblock %}">
 
-{% block body %}
-    <div class="wrapper">
-        {% block nav_header %}
-            {% include 'adminlte/components/_main_header.html' %}
-        {% endblock %}
+    <!-- Bloque para definir el contenido principal de la página -->
+    {% block body %}
+        <div class="wrapper">
+            <!-- Bloque para incluir la cabecera de la página -->
+            {% block nav_header %}
+                <!-- Incluye el archivo _main_header.html desde la carpeta adminlte/components/ -->
+                {% include 'adminlte/components/_main_header.html' %}
+            {% endblock %}
 
-        {% block nav_sidebar %}
-            {% include 'adminlte/components/_main_sidebar.html' %}
-        {% endblock %}
+            <!-- Bloque para incluir el sidebar de la página -->
+            {% block nav_sidebar %}
+                <!-- Incluye el archivo _main_sidebar.html desde la carpeta adminlte/components/ -->
+                {% include 'adminlte/components/_main_sidebar.html' %}
+            {% endblock %}
 
-        {% block content_wrapper %}
-        <div class="content-wrapper">
-            {% block content_header %}
-                <section class="content-header">
-                    {% block no_heading %}
-                        <h1>
-                            {% block page_name %}{% endblock %}
-                            <div class="header-actions">
-                                {% block page_actions %}
-                                    
-                                   
+            <!-- Bloque para definir el contenido principal de la página -->
+            {% block content_wrapper %}
+                <div class="content-wrapper">
+                    <!-- Bloque para definir la cabecera del contenido -->
+                    {% block content_header %}
+                        <section class="content-header">
+                            <!-- Bloque para definir el título y la descripción de la página -->
+                            {% block no_heading %}
+                                <h1>
+                                    {% block page_name %}{% endblock %}
+                                    <div class="header-actions">
+                                        {% block page_actions %}
+                                            
+                                            
+                                        {% endblock %}
+                                    </div>
+                                    {% block no_description %}
+                                        <small>{% block page_description %}{% endblock %}</small>
+                                    {% endblock %}
+                                </h1>
+                            {% endblock no_heading %}
+                        </section>
+                    {% endblock content_header %}
+
+                    <!-- Bloque para definir el contenido principal -->
+                    {% block content_outer %}
+                        <section class="content">
+                            <!-- Bloque para incluir los mensajes de la página -->
+                            {% block messages %}
+                                <!-- Incluye el archivo _messages.html desde la carpeta adminlte/components/ -->
+                                {% include 'adminlte/components/_messages.html' %}
+                            {% endblock %}
+
+                            <!-- Bloque para definir el contenido dinámico -->
+                            {% block content_block_wrap %}
+                                {% block content %}
+                                    <!-- Contenido dinámico -->
+                                    {% block dynamic_content %}
+                                    {% endblock %}
                                 {% endblock %}
-                            </div>
-                            {% block no_description %}
-                                <small>{% block page_description %}{% endblock %}</small>
                             {% endblock %}
-                        </h1>
-                    {% endblock no_heading %}
-                </section>
-            {% endblock content_header %}
-
-            {% block content_outer %}
-                <section class="content">
-                    {% block messages %}
-                        {% include 'adminlte/components//_messages.html' %}
-                    {% endblock %}
-
-                    {% block content_block_wrap %}
-                        {% block content %}
-                            <!-- Contenido dinámico -->
-                            {% block dynamic_content %}
-                            {% endblock %}
-                        {% endblock %}
-                    {% endblock %}
-                </section>
-            {% endblock content_outer %}
+                        </section>
+                    {% endblock content_outer %}
+                </div>
+            {% endblock content_wrapper %}
+            
+            <!-- Bloque para incluir el pie de página -->
+            {% block nav_footer %}
+                <!-- Incluye el archivo _main_footer.html desde la carpeta adminlte/components/ -->
+                {% include 'adminlte/components/_main_footer.html' %}
+            {% endblock %}
         </div>
-        {% endblock content_wrapper %}
-        
-        {% block nav_footer %}
-            {% include 'adminlte/components/_main_footer.html' %}
-        {% endblock %}
-    </div>
-{% endblock body %}
+    {% endblock body %}
 
-{% block javascript %}
-    {% include 'adminlte/components/_scripts.html' %}
-{% endblock %}
+    <!-- Bloque para incluir los archivos de JavaScript -->
+    {% block javascript %}
+        <!-- Incluye el archivo _scripts.html desde la carpeta adminlte/components/ -->
+        {% include 'adminlte/components/_scripts.html' %}
+    {% endblock %}
 
-{% block extra_js %}{% endblock %}
+    <!-- Bloque para incluir contenido adicional en el pie de la página -->
+    {% block extra_js %}{% endblock %}
 
-{% block extra_foot %}{% endblock %}
+    <!-- Bloque para incluir contenido adicional en el pie de la página -->
+    {% block extra_foot %}{% endblock %}
 </body>
 </html>

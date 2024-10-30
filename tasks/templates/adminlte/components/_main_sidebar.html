@@ -7,7 +7,7 @@
 <aside class="main-sidebar sidebar-dark-primary elevation-4">
     <!-- Brand Logo -->
     {% block logo %}
-    <a href="/administrador" class="brand-link">
+    <a class="brand-link">
         <img src="{% static 'admin-lte/dist/img/gl.png' %}" alt="AdminLTE Logo" class="brand-image img-circle elevation-3" style="opacity: .8">
         {% block logo_text %}
         <span class="brand-text font-weight-light">INGENIEROS S.A.</span>
@@ -26,9 +26,8 @@
         <nav class="mt-2">
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
                 {% block nav_links_outer %}
-                <li class="nav-header">{% block nav_heading %}MAIN NAVIGATION{% endblock %}</li>
-
                 {% block nav_links %}
+                
                 <li class="nav-item">
                     <a href="{% url 'administrar_usuarios' %}" class="nav-link">
                         <i class="nav-icon fas fa-users"></i>
@@ -46,6 +45,13 @@
                         <i class="nav-icon fas fa-plug"></i>
                         <p>Setear Cable</p>
                     </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'lista_destinatarios' %}" class="nav-link">
+                        <i class="nav-icon fas fa-envelope"></i>
+                        <p>Agregar Correo</p>
+                    </a>
+                </li>
                 {% endblock %}
                 {% endblock nav_links_outer %}
             </ul>

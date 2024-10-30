@@ -1,24 +1,30 @@
+from urllib import request
 from django.template import Context
+from django.http import JsonResponse
 from django.template.loader import get_template
 import chardet
 from django.utils import timezone 
 from django.shortcuts import render, redirect,  get_object_or_404
 from django.contrib import messages
-from django.http import HttpResponse
 from django.core.paginator import Paginator
 from django.db.models import Q
-from .models import Usuarios, Proyectos, Tableros, Cables
-from .forms import  LoginForm, UsuarioForm, ProyectoForm, TablerosForm, CableForm
+from .models import Usuarios, Proyectos, Tableros, Cables, MensajePruebaDP, RegistroDispensa, DestinatarioCorreo
+from .forms import  LoginForm, UsuarioForm, ProyectoForm, TablerosForm, CableForm, DestinatarioCorreoForm
 from django.db import IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.db import transaction
 import csv
-from django.contrib.auth.decorators import login_required
 from .decorators import verificar_rol
 import io
 from django.core.mail import send_mail
-from django.conf import settings
 from django.shortcuts import render
+import paho.mqtt.publish as publicar
+import paho.mqtt.client as mqtt
+import threading
+import paho.mqtt.publish as publish
+from django.http import JsonResponse
+from django.db.models import Sum
+import json
 
 def login(request):
     if request.method == 'POST':
@@ -28,22 +34,29 @@ def login(request):
             contraseña = form.cleaned_data['contraseña']
             try:
                 user = Usuarios.objects.get(nombre_usuario=nombre_usuario)
-                
+
+                # Ver ificar si el usuario está activo
+                if not user.estado:
+                    messages.error(request, "El usuario está inactivo.")
+                    return render(request, 'login.html', {'form': form})
+
                 # Verificar si la contraseña es correcta
                 if check_password(contraseña, user.contraseña):
                     # Redireccionar basado en el rol del usuario
                     if user.rol == 'superadmin':
-                        response = redirect('superAdmin')
+                        response = redirect('administrar_usuarios')
                     elif user.rol == 'admin':
-                        response = redirect('administrador')
+                        response = redirect('administrar_usuarios')
                     elif user.rol == 'operario':
                         response = redirect('operario')
                     else:
                         response = redirect('auditor')
-                    
+
                     # Guardar cookies con la cédula y el rol
                     response.set_cookie('user_cedula', user.cedula)
                     response.set_cookie('user_role', user.rol)
+                    response.set_cookie('user_name', user.nombre_persona)  # Guardar el nombre de la persona
+
                     return response
                 else:
                     messages.error(request, "Contraseña incorrecta.")
@@ -56,22 +69,22 @@ def login(request):
     return render(request, 'login.html', {'form': form})
 
 def logout(request):
+    # Crear una respuesta de redirección a la página de login
     response = redirect('login')
+    # Eliminar las cookies de la sesión del usuario
     response.delete_cookie('user_cedula')
     response.delete_cookie('user_role')
+    # Retornar la respuesta con las cookies eliminadas
     return response
 
 def administrador(request):
+    # Verificar si el usuario tiene una sesión válida y un rol de administrador
     if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'admin':
         return redirect('login')
     return render(request, 'adminlte/base.html')
 
-def auditor(request):
-    if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'auditor':
-        return redirect('login')
-    return render(request, 'auditor.html')
-
 def superAdmin(request):
+    # Verificar si el usuario tiene una sesión válida y un rol de superadministrador
     if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'superadmin':
         return redirect('login')
     return render(request, 'adminlte/base.html')
@@ -111,10 +124,13 @@ def editar_usuario(request, cedula):
     current_user_role = request.COOKIES.get('user_role')
     current_user_cedula = request.COOKIES.get('user_cedula')
 
-    # Verifica si el usuario actual es un admin intentando editar a superadmin
+    # Verifica si el usuario actual es un admin intentando editar a superadmin o a otro admin
     if current_user_role == 'admin' and (usuario.rol == 'superadmin' or usuario.rol == 'admin'):
         messages.error(request, 'No tiene permiso para editar a otro administrador o superadmin.')
         return redirect('administrar_usuarios')
+
+    # Contar cuántos administradores activos hay
+    admin_count = Usuarios.objects.filter(rol='admin', estado=True).count()
 
     if request.method == 'POST':
         form = UsuarioForm(request.POST, instance=usuario, request=request)
@@ -133,6 +149,15 @@ def editar_usuario(request, cedula):
                 if usuario.rol == 'superadmin':
                     usuario.rol = Usuarios.objects.get(cedula=cedula).rol
                 
+                # Asegurarse de que el estado del superadmin siempre sea activo
+                if usuario.rol == 'superadmin':
+                    usuario.estado = True  # Siempre activo
+
+                # Verificar si se intenta poner inactivo a un administrador
+                if usuario.rol == 'admin' and form.cleaned_data.get('estado') == False and admin_count <= 1:
+                    messages.error(request, 'Debe haber al menos un administrador activo.')
+                    return redirect('administrar_usuarios')
+
                 usuario.save()
                 messages.success(request, 'Usuario actualizado exitosamente')
 
@@ -140,6 +165,7 @@ def editar_usuario(request, cedula):
                 if current_user_cedula == usuario.cedula:
                     response = redirect('administrar_usuarios')
                     response.set_cookie('user_role', usuario.rol)  # Actualiza el rol en la cookie
+                    response.set_cookie('user_name', usuario.nombre_persona)  # Actualiza el nombre en la cookie
                     return response
                 
                 return redirect('administrar_usuarios')  # Redirige a la lista de usuarios después de editar
@@ -148,22 +174,26 @@ def editar_usuario(request, cedula):
     else:
         form = UsuarioForm(instance=usuario, request=request)
 
-    return render(request, 'usuarios/editar_usuario.html', {'form': form})
+    return render(request, 'usuarios/editar_usuario.html', {'form': form, 'admin_count': admin_count})
 
 @verificar_rol('admin', 'superadmin')
 def eliminar_usuario(request, cedula):
     usuario = get_object_or_404(Usuarios, cedula=cedula)
     user_role = request.COOKIES.get('user_role')
 
-    # Verificar si el usuario a eliminar es el superadmin o si el usuario autenticado es admin y está intentando eliminar otro admin
+    # Verificar si el usuario a eliminar es el superadmin
     if usuario.rol == 'superadmin':
         messages.error(request, 'No se puede eliminar al superadministrador.')
         return redirect('administrar_usuarios')
-    
-    if user_role == 'admin' and usuario.rol == 'admin':
-        messages.error(request, 'No se puede eliminar a otro administrador desde una sesión de administrador.')
-        return redirect('administrar_usuarios')
-    
+
+    # Verificar si el usuario a eliminar es un admin
+    if usuario.rol == 'admin':
+        # Contar cuántos administradores activos hay
+        admin_count = Usuarios.objects.filter(rol='admin', estado=True).count()
+        if admin_count <= 1:
+            messages.error(request, 'Debe haber al menos un administrador activo.')
+            return redirect('administrar_usuarios')
+
     if request.method == 'POST':
         usuario.delete()
         messages.success(request, 'El usuario ha sido eliminado correctamente.')
@@ -175,7 +205,8 @@ def eliminar_usuario(request, cedula):
 def administrar_usuarios(request):
     query = request.GET.get('q')
     user_role = request.COOKIES.get('user_role')
-
+    
+    # Realizar la búsqueda de usuarios según la consulta y el rol del usuario
     if query:
         if user_role == 'admin':
             usuarios = Usuarios.objects.filter(
@@ -229,8 +260,10 @@ def crear_proyecto(request):
 
 @verificar_rol('admin', 'superadmin')
 def editar_proyecto(request, proyecto):
+    # Obtener el proyecto a editar desde la base de datos
     proyecto_instance = get_object_or_404(Proyectos, proyecto=proyecto)
     
+    # Manejar la solicitud POST para actualizar el proyecto
     if request.method == 'POST':
         form = ProyectoForm(request.POST, instance=proyecto_instance)
         if form.is_valid():
@@ -247,8 +280,10 @@ def editar_proyecto(request, proyecto):
 
 @verificar_rol('admin', 'superadmin')
 def eliminar_proyecto(request, proyecto):
+    # Obtener el proyecto a eliminar desde la base de datos
     proyecto = get_object_or_404(Proyectos, proyecto=proyecto)
     
+    # Manejar la solicitud POST para eliminar el proyecto
     if request.method == 'POST':
         proyecto.delete()
         messages.success(request, 'El proyecto ha sido eliminado correctamente.')
@@ -301,10 +336,14 @@ def crear_tablero(request):
 
 @verificar_rol('admin', 'superadmin')
 def editar_tablero(request, identificador):
+    # Obtener el tablero a editar desde la base de datos
     tablero = get_object_or_404(Tableros, identificador=identificador)
     
+    # Manejar la solicitud POST para actualizar el tablero
     if request.method == 'POST':
         form = TablerosForm(request.POST, instance=tablero)
+        
+        # Verificar si el formulario es válido
         if form.is_valid():
             try:
                 form.save()
@@ -319,9 +358,12 @@ def editar_tablero(request, identificador):
 
 @verificar_rol('admin', 'superadmin')
 def eliminar_tablero(request, identificador):
+    # Obtener el tablero a eliminar desde la base de datos
     tablero = get_object_or_404(Tableros, identificador=identificador)
     
+    # Manejar la solicitud POST para eliminar el tablero
     if request.method == 'POST':
+        # Eliminar el tablero
         tablero.delete()
         messages.success(request, 'El tablero ha sido eliminado correctamente.')
         return redirect('tableros')
@@ -456,8 +498,10 @@ def editar_cable(request, referencia):
 
 @verificar_rol('admin', 'superadmin')
 def eliminar_cable(request, referencia):
+    # Obtener el cable a eliminar desde la base de datos
     setear_cable = get_object_or_404(Cables, referencia=referencia)
     
+    # Manejar la solicitud POST para eliminar el cable
     if request.method == 'POST':
         setear_cable.delete()
         messages.success(request, 'El cable ha sido eliminado correctamente.')
@@ -475,6 +519,7 @@ def cables(request):
     else:
         setear_cables = Cables.objects.all().order_by('referencia')
 
+    # Identificar cables con stock bajo
     cables_bajo_stock = [cable for cable in setear_cables if cable.verificar_stock_minimo()]
 
     # Enviar correos solo si es necesario
@@ -487,7 +532,7 @@ def cables(request):
     paginator = Paginator(setear_cables, 5)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
-    
+
     context = {
         'page_obj': page_obj,
         'query': query,
@@ -495,17 +540,21 @@ def cables(request):
     }
     return render(request, 'cables/cables.html', context)
 
-@verificar_rol('admin', 'superadmin')
 def enviar_correo_stock_bajo(cable):
+    # Definir el asunto del correo electrónico
     asunto = 'Advertencia: Stock Bajo de Cables'
-    
+
+    # Cargar la plantilla de correo electrónico
     template = get_template('cables/correo_stock_bajo.html')
+    # Crear el contexto para la plantilla con el cable correspondiente
     context = {'cable': cable}  
     mensaje = template.render(context)
-    
-    destinatarios = ['practicante.sistemas@glingenieros.co']
-    remitente = 'dispensador@glingenieros.co'
 
+    # Obtener todos los correos electrónicos desde la base de datos
+    destinatarios = DestinatarioCorreo.objects.values_list('correo', flat=True)
+    remitente = 'dispensador@glingenieros.co'
+    
+    # Enviar el correo electrónico
     send_mail(
         asunto,
         mensaje,
@@ -515,12 +564,174 @@ def enviar_correo_stock_bajo(cable):
         html_message=mensaje
     )
 
+@verificar_rol('admin', 'superadmin')
+def crear_destinatario(request):
+    if request.method == 'POST':
+        form = DestinatarioCorreoForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, 'Destinatario creado exitosamente.')
+                return redirect('lista_destinatarios')
+            except IntegrityError:
+                messages.error(request, 'Error al guardar el destinatario. Verifique los datos ingresados.')
+    else:
+        form = DestinatarioCorreoForm()
+
+    return render(request, 'destinatarios/crear_destinatario.html', {'form': form})
+
+@verificar_rol('admin', 'superadmin')
+def editar_destinatario(request, id):
+    destinatario = get_object_or_404(DestinatarioCorreo, id=id)
+    
+    if request.method == 'POST':
+        form = DestinatarioCorreoForm(request.POST, instance=destinatario)
+        if form.is_valid():
+            try:
+                form.save()
+                messages.success(request, 'Destinatario actualizado exitosamente.')
+                return redirect('lista_destinatarios')
+            except IntegrityError:
+                messages.error(request, 'Error al actualizar el destinatario. Verifique si el correo ya existe.')
+    else:
+        form = DestinatarioCorreoForm(instance=destinatario)
+
+    return render(request, 'destinatarios/editar_destinatario.html', {'form': form})
+
+@verificar_rol('admin', 'superadmin')
+def eliminar_destinatario(request, id):
+    destinatario = get_object_or_404(DestinatarioCorreo, id=id)
+    
+    if request.method == 'POST':
+        destinatario.delete()
+        messages.success(request, 'El destinatario ha sido eliminado correctamente.')
+        return redirect('lista_destinatarios')
+
+    return render(request, 'destinatarios/eliminar_destinatario.html', {'destinatario': destinatario})
+
+@verificar_rol('admin', 'superadmin')
+def lista_destinatarios(request):
+    query = request.GET.get('q')
+    if query:
+        destinatarios = DestinatarioCorreo.objects.filter(
+            Q(correo__icontains=query)
+        ).order_by('correo')
+    else:
+        destinatarios = DestinatarioCorreo.objects.all().order_by('correo')
+    
+    paginator = Paginator(destinatarios, 5)  # Pagina los destinatarios con 5 por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'query': query,
+    }
+    return render(request, 'destinatarios/lista_destinatarios.html', context)
+
 #Operario
+def on_connect(client, userdata, flags, rc):
+    print(f"Conectado con código {rc}")
+    client.subscribe("Prueba-DP_GL")
+    client.subscribe("Prueba-DP_GL2")
+
+# Función al recibir un mensaje MQTT
+def on_message(client, userdata, msg):
+    print(f"Tópico: {msg.topic} | Mensaje: {msg.payload}")
+
+    try:
+        mensaje = msg.payload.decode('utf-8')
+        print(f"Mensaje recibido: {mensaje}")
+
+        if msg.topic == "Prueba-DP_GL":
+            MensajePruebaDP.objects.create(mensaje=mensaje)
+            print("Mensaje del primer topic insertado en la base de datos.")
+
+        elif msg.topic == "Prueba-DP_GL2":
+            cantidad_dispensada = float(mensaje)
+            cable_referencia = userdata.get('cable_referencia')
+
+            if cable_referencia:
+                try:
+                    cable = Cables.objects.get(referencia=cable_referencia)
+                    tablero = userdata.get('tablero')
+                    proyecto = tablero.proyecto if tablero else None
+
+                    # Verificar que el usuario exista antes de continuar
+                    if 'usuario' not in userdata:
+                        print("Error: No se ha proporcionado un usuario. No se puede dispensar cable.")
+                        return  # Salir de la función sin realizar la dispensación
+
+                    usuario_nombre = userdata['usuario']
+                    try:
+                        # Obtener la instancia del usuario
+                        usuario = Usuarios.objects.get(nombre_usuario=usuario_nombre)
+                    except Usuarios.DoesNotExist:
+                        print(f"Error: El usuario '{usuario_nombre}' no existe. No se puede dispensar cable.")
+                        return  # Salir de la función si no se encuentra el usuario
+
+                    # Actualizar la cantidad restante del cable
+                    if cable.cantidad_restante >= cantidad_dispensada:
+                        cable.cantidad_restante -= cantidad_dispensada
+                        cable.save()
+
+                        # Registrar la dispensación en la tabla RegistroDispensa
+                        RegistroDispensa.objects.create(
+                            cable=cable, 
+                            cantidad_dispensada=cantidad_dispensada,
+                            cantidad_restante_despues=cable.cantidad_restante,  # Guardar cantidad restante después de la dispensación
+                            proyecto=proyecto, 
+                            tablero=tablero,
+                            usuario=usuario  # Usar la instancia de usuario obtenida
+                        )
+
+                        # Verificar si el stock está por debajo del mínimo
+                        if cable.verificar_stock_minimo():
+                            enviar_correo_stock_bajo(cable)
+                            cable.ultima_advertencia = timezone.now()
+                            cable.save()
+
+                        print(f"Stock del cable {cable_referencia} actualizado. Nueva cantidad restante: {cable.cantidad_restante}")
+                    else:
+                        print(f"Error: No hay suficiente cable para dispensar {cantidad_dispensada}.")
+
+                    # Restablecer el flag al recibir la respuesta
+                    userdata['solicitud_en_proceso'] = False
+
+                except Cables.DoesNotExist:
+                    print(f"Error: No se encontró el cable con la referencia {cable_referencia}")
+            else:
+                print("Error: No se proporcionó una referencia de cable para actualizar.")
+
+    except IntegrityError as e:
+        print(f"Error de integridad al guardar el mensaje: {e}")
+    except Exception as e:
+        print(f"Error al procesar el mensaje: {e}")
+
+# Crear un cliente MQTT
+cliente = mqtt.Client()
+cliente.on_connect = on_connect
+cliente.on_message = on_message
+
+# Establecer userdata
+cliente.user_data_set({'solicitud_en_proceso': False})
+
+# Intentar conectar al broker MQTT
+try:
+    cliente.connect("broker.hivemq.com", 1883, 60)
+    print("Conectado al broker MQTT.")
+except Exception as e:
+    print(f"Error al conectar al broker MQTT: {e}")
+    exit(1)
+
+# Mantener el cliente en funcionamiento
+cliente.loop_start()
+
+# Vista para operario
 def operario(request):
     if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'operario':
         return redirect('login')
 
-    # Obtener la consulta de búsqueda si existe
     query = request.GET.get('q')
     if query:
         proyectos = Proyectos.objects.filter(
@@ -530,68 +741,291 @@ def operario(request):
     else:
         proyectos = Proyectos.objects.all().order_by('tipo_proyecto', 'numero')
 
-    # Configurar la paginación
-    paginator = Paginator(proyectos, 5)  # Mostrar 10 proyectos por página
+    paginator = Paginator(proyectos, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    # Pasar contexto al template
     context = {
-        'page_obj': page_obj,    # Para la paginación
-        'query': query,          # Mantener la consulta de búsqueda en el contexto
+        'page_obj': page_obj,
+        'query': query,
     }
     return render(request, 'operario/operario.html', context)
 
+# Vista para ver items de un proyecto
 @verificar_rol('operario')
 def ver_items_proyecto(request, proyecto_id):
     proyecto = get_object_or_404(Proyectos, proyecto=proyecto_id)
-    # Obtener el parámetro de búsqueda
     query = request.GET.get('q', '')
-    # Filtrar los tableros asociados con el proyecto
     tableros = Tableros.objects.filter(proyecto=proyecto)
-    # Aplicar filtro de búsqueda si se ha proporcionado
+
     if query:
         tableros = tableros.filter(identificador__icontains=query)
-    # Configurar la paginación
-    paginator = Paginator(tableros, 5)  # Mostrar 10 tableros por página
+
+    tableros = tableros.order_by('identificador')
+
+    paginator = Paginator(tableros, 5)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
-    # Pasar contexto al template
+
     context = {
         'proyecto': proyecto,
-        'page_obj': page_obj,  # Para la paginación
-        'query': query,        # Mantener la consulta de búsqueda en el contexto
+        'page_obj': page_obj,
+        'query': query,
     }
     return render(request, 'operario/items_proyecto.html', context)
 
+# Vista para ver los cables de un tablero
 @verificar_rol('operario')
 def ver_cables_tablero(request, tablero_id):
-    # Obtener el tablero seleccionado
     tablero = get_object_or_404(Tableros, identificador=tablero_id)
-    # Obtener el proyecto asociado con el tablero
     proyecto = tablero.proyecto
-    # Inicializar el queryset para todos los cables
     cables = Cables.objects.all()
-    # Verificar si hay una consulta de búsqueda
+
     query = request.GET.get('q')
     if query:
-        # Filtrar cables por referencia que coincidan con la consulta
         cables = cables.filter(referencia__icontains=query)
-    
-    if request.method == 'POST':
-        # Obtener el cable seleccionado por el usuario
-        selected_cable = request.POST.get('cable')
-        
-        if selected_cable:
-            # Obtener el objeto del cable seleccionado
-            cable = get_object_or_404(Cables, referencia=selected_cable)
-            # Redirigir a otra vista o mostrar un mensaje de confirmación
-            return redirect('some_view')  # Cambia 'some_view' por la vista adecuada
 
-    # Renderizar la plantilla con la lista de cables filtrada si hay búsqueda
+    if request.method == 'POST':
+        cable_referencia = request.POST.get('cable')
+
+        # Verificar si hay una solicitud en proceso
+        if cliente.user_data_get().get('solicitud_en_proceso'):
+            error_message = "Ya se ha enviado una solicitud. Espera la respuesta."
+            return render(request, 'operario/ver_cables.html', {
+                'tablero': tablero,
+                'cables': cables,
+                'proyecto_id': proyecto.proyecto,
+                'query': query,
+                'error_message': error_message,
+            })
+
+        if cable_referencia:
+            esp_seleccionado = 1  # Lógica para seleccionar ESP
+            encoder_seleccionado = 1  # Lógica para seleccionar encoder
+            numero_reserva = 3  # Número de metros reservados
+
+            mensaje_solicitud = f"{esp_seleccionado},{encoder_seleccionado},{numero_reserva}"
+
+            # Obtener el usuario a partir de la cookie
+            user_cedula = request.COOKIES.get('user_cedula')
+            try:
+                user = Usuarios.objects.get(cedula=user_cedula)
+                # Publicar el mensaje en el tópico adecuado
+                cliente.user_data_set({
+                    'cable_referencia': cable_referencia,
+                    'solicitud_en_proceso': True,
+                    'tablero': tablero,
+                    'usuario': user
+                })
+                cliente.publish("Prueba-DP_GL", mensaje_solicitud)
+                print(f"Solicitud enviada: {mensaje_solicitud}")
+            except Usuarios.DoesNotExist:
+                error_message = "El usuario no existe."
+                return render(request, 'operario/ver_cables.html', {
+                    'tablero': tablero,
+                    'cables': cables,
+                    'proyecto_id': proyecto.proyecto,
+                    'query': query,
+                    'error_message': error_message,
+                })
+
+            return redirect('ver_cables_tablero', tablero_id=tablero_id)
+        else:
+            error_message = "Por favor, selecciona un cable antes de proceder."
+            return render(request, 'operario/ver_cables.html', {
+                'tablero': tablero,
+                'cables': cables,
+                'proyecto_id': proyecto.proyecto,
+                'query': query,
+                'error_message': error_message,
+            })
+
     return render(request, 'operario/ver_cables.html', {
         'tablero': tablero,
         'cables': cables,
         'proyecto_id': proyecto.proyecto,
-        'query': query,  # Pasar la consulta de búsqueda al contexto para mantenerla en el formulario
+        'query': query,
     })
+
+# Función para iniciar el cliente MQTT
+def iniciar_mqtt(request):
+    cliente.loop_start()
+    return render(request, 'mqtt_conectado.html')
+
+#Rol Auditor
+@verificar_rol('auditor')
+def auditor(request):
+    # Verificar si el usuario tiene una sesión válida y un rol de auditor
+    user_cedula = request.COOKIES.get('user_cedula')
+    user_role = request.COOKIES.get('user_role')
+
+    if not user_cedula or user_role != 'auditor':
+        return redirect('login')
+
+   
+    return render(request, 'auditor/base.html')
+
+@verificar_rol('auditor')
+def registros(request):
+    # Obtener los filtros seleccionados
+    filtro_principal = request.GET.get('filtro_principal', 'proyecto')  # Establecer 'proyecto' como valor por defecto
+    filtro_secundario = request.GET.get('filtro_secundario')
+
+    # Obtener las opciones para el filtro secundario según el filtro principal
+    if filtro_principal == 'operario':
+        # Obtener los operarios que han dispensado cable
+        opciones_secundarias = RegistroDispensa.objects.values_list('usuario__nombre_usuario', flat=True).distinct()
+    elif filtro_principal == 'proyecto':
+        # Obtener los proyectos donde han dispensado cable
+        opciones_secundarias = RegistroDispensa.objects.values_list('proyecto__proyecto', flat=True).distinct()
+    else:
+        opciones_secundarias = []
+
+    # Filtrar los registros según los filtros seleccionados
+    registros = RegistroDispensa.objects.all()
+    if filtro_principal == 'operario' and filtro_secundario:
+        # Mostrar solo los proyectos y tableros donde el operario seleccionado ha dispensado cable
+        registros = registros.filter(usuario__nombre_usuario=filtro_secundario).values('proyecto__proyecto', 'tablero__identificador', 'usuario__nombre_usuario').distinct()
+    elif filtro_principal == 'operario' and not filtro_secundario:
+        # Mostrar todos los proyectos y tableros donde han dispensado cable los operarios
+        registros = registros.values('proyecto__proyecto', 'tablero__identificador', 'usuario__nombre_usuario').distinct()
+    elif filtro_principal == 'proyecto' and filtro_secundario:
+        # Mostrar solo el proyecto seleccionado
+        registros = registros.filter(proyecto__proyecto=filtro_secundario).distinct('proyecto__proyecto').values('proyecto__proyecto', 'tablero__identificador')
+    elif filtro_principal == 'proyecto' and not filtro_secundario:
+        # Mostrar todos los proyectos donde han dispensado cable
+        registros = registros.values('proyecto__proyecto').distinct()
+
+    # Calcular el total de cables dispensados filtrado por operario si corresponde
+    if filtro_principal == 'operario':
+        if filtro_secundario:
+            total_cables_dispensados = RegistroDispensa.objects.filter(usuario__nombre_usuario=filtro_secundario)\
+                .values('usuario__nombre_usuario', 'proyecto__proyecto', 'tablero__identificador')\
+                .annotate(total_cables=Sum('cantidad_dispensada'))\
+                .order_by('usuario__nombre_usuario', 'proyecto__proyecto', 'tablero__identificador')
+        else:
+            total_cables_dispensados = RegistroDispensa.objects.values('usuario__nombre_usuario', 'proyecto__proyecto', 'tablero__identificador')\
+                .annotate(total_cables=Sum('cantidad_dispensada'))\
+                .order_by('usuario__nombre_usuario', 'proyecto__proyecto', 'tablero__identificador')
+    elif filtro_principal == 'proyecto':
+        total_cables_dispensados = RegistroDispensa.objects.values('proyecto__proyecto', 'tablero__identificador')\
+            .annotate(total_cables=Sum('cantidad_dispensada'))\
+            .order_by('proyecto__proyecto', 'tablero__identificador')
+
+    context = {
+        'filtro_principal': filtro_principal,
+        'filtro_secundario': filtro_secundario,
+        'opciones_secundarias': opciones_secundarias,
+        'registros': registros,
+        'total_cables_dispensados': total_cables_dispensados,
+    }
+
+    return render(request, 'auditor/registros.html', context)
+    
+@verificar_rol('auditor')
+def ver_tableros_proyecto(request, proyecto):
+    # Obtener los tableros del proyecto con el total de cables dispensados
+    tableros = RegistroDispensa.objects.filter(proyecto__proyecto=proyecto) \
+        .values('tablero__identificador') \
+        .annotate(total_cables_dispensados=Sum('cantidad_dispensada'))
+
+    # Crear el contexto para pasar a la plantilla
+    context = {
+        'proyecto': proyecto,
+        'tableros': tableros,
+    }
+
+    return render(request, 'auditor/tableros_proyecto.html', context)
+
+@verificar_rol('auditor')
+def ver_referencias_cables(request, proyecto, tablero):
+    # Obtener las referencias de cables del tablero con la cantidad total dispensada
+    referencias_cables = RegistroDispensa.objects.filter(proyecto__proyecto=proyecto, tablero__identificador=tablero) \
+        .values('cable__referencia') \
+        .annotate(total_dispensada=Sum('cantidad_dispensada'))
+
+    # Preparar listas para las etiquetas (referencias) y los datos (totales)
+    referencias = [referencia['cable__referencia'] for referencia in referencias_cables]
+    totales = [referencia['total_dispensada'] for referencia in referencias_cables]
+
+    # Obtener el total de metros dispensados en general
+    total_dispensado_general = sum(totales)
+
+    # Crear el contexto para pasar a la plantilla
+    context = {
+        'proyecto': proyecto,
+        'tablero': tablero,
+        'referencias_cables': referencias_cables,
+        'referencias_json': json.dumps(referencias),  # Convertir a JSON
+        'totales_json': json.dumps(totales),  # Convertir a JSON
+        'total_dispensado_general': total_dispensado_general,  # Agregar total general al contexto
+    }
+
+    return render(request, 'auditor/referencias_cables.html', context)
+
+@verificar_rol('auditor')
+def ver_cable(request, proyecto, tablero, operario):
+    # Filtrar los cables dispensados por proyecto, tablero y operario
+    cables_dispensados = RegistroDispensa.objects.filter(
+        proyecto__proyecto=proyecto,
+        tablero__identificador=tablero,
+        usuario__nombre_usuario=operario
+    ).values('cable__referencia').annotate(total_dispensado=Sum('cantidad_dispensada'))
+
+    # Obtener el proyecto y tablero seleccionados
+    proyecto_obj = Proyectos.objects.get(proyecto=proyecto)
+    tablero_obj = Tableros.objects.get(identificador=tablero)
+
+    # Listas para las referencias y totales para el gráfico
+    referencias = [cable['cable__referencia'] for cable in cables_dispensados]
+    totales = [cable['total_dispensado'] for cable in cables_dispensados]
+
+    # Calcular el total de cables dispensados
+    total_cables_dispensados = sum(totales)  # Sumar todos los totales dispensados
+
+    # Contexto para la plantilla
+    context = {
+        'cables_dispensados': cables_dispensados,
+        'proyecto': proyecto_obj,
+        'tablero': tablero_obj,
+        'operario': operario,
+        'referencias_json': json.dumps(referencias),  # Pasamos los datos a JSON
+        'totales_json': json.dumps(totales),  # Pasamos los datos a JSON
+        'total_cables_dispensados': total_cables_dispensados,  # Total general
+    }
+
+    return render(request, 'auditor/ver_cable.html', context)
+
+@verificar_rol('auditor')
+def registros_detallados(request):
+    # Obtener la consulta del buscador, inicializando en vacío si no hay
+    query = request.GET.get('q', '')  # Cambiado aquí para asegurar que sea vacío por defecto
+    
+    # Filtrar registros según la consulta del buscador
+    if query:
+        registros = RegistroDispensa.objects.filter(
+            Q(usuario__nombre_usuario__icontains=query) | 
+            Q(tablero__identificador__icontains=query) 
+        ).order_by('fecha')
+    else:
+        registros = RegistroDispensa.objects.all().order_by('fecha')
+
+    context = {
+        'registros': registros,
+        'query': query,
+    }
+    return render(request, 'auditor/registros_detallados.html', context)
+
+
+
+
+
+
+
+
+
+
+
+
+
+

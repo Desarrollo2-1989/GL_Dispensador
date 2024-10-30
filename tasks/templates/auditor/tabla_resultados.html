@@ -1,0 +1,44 @@
+<!-- auditor/tabla_resultados.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados del Auditor</title>
+</head>
+<body>
+    <h1>Resultados de Auditoría</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Proyecto</th>
+                <th>Tablero</th>
+                <th>Referencia del Cable</th>
+                <th>Cantidad Dispensada (metros)</th>
+                <th>Fecha</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for registro in page_obj %}
+            <tr>
+                <td>{{ registro.proyecto.proyecto }}</td>
+                <td>{{ registro.tablero.identificador }}</td>
+                <td>{{ registro.cable.referencia }}</td>
+                <td>{{ registro.cantidad_dispensada }}</td>
+                <td>{{ registro.fecha }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page={{ page_obj.previous_page_number }}">Anterior</a>
+        {% endif %}
+        <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}">Siguiente</a>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -1,0 +1,100 @@
+{% extends 'auditor/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}Registro de Cables Dispensados{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="mb-3">
+    <a href="{% url 'registros' %}?filtro_principal=operario" class="btn btn-secondary" style="margin-left: 20px;">
+        <i class="fas fa-arrow-left"></i> Volver
+    </a>
+</div>
+<div class="card">
+    <h1 class="page-title text-center mb-4">Operario: {{ operario }} - Tablero: {{ tablero.identificador }} </h1>
+   
+    <div class="table-responsive">
+        <!-- Tabla de cables dispensados -->
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Referencia del Cable</th>
+                    <th>Total Dispensado (metros)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for cable in cables_dispensados %}
+                <tr>
+                    <td>{{ cable.cable__referencia }}</td>
+                    <td>{{ cable.total_dispensado }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="text-center">
+                        No hay cables dispensados registrados
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Sección para la gráfica -->
+<div class="chart-container" style="max-width: 1200px; margin: auto;">
+    <canvas id="cableChart" width="800" height="400"></canvas> <!-- Ajuste del tamaño de la gráfica -->
+</div>
+
+<script>
+    // Datos de la gráfica que vienen desde la vista
+    const referencias = JSON.parse("{{ referencias_json|escapejs }}");
+    const totales = JSON.parse("{{ totales_json|escapejs }}");
+    const totalGeneral = "{{ total_cables_dispensados }}";  // Total general desde el contexto
+
+    // Crear la gráfica usando Chart.js
+    const ctx = document.getElementById("cableChart").getContext("2d");
+    const cableChart = new Chart(ctx, {
+        type: "bar",  // Tipo de gráfica
+        data: {
+            labels: referencias,  // Etiquetas (referencias de cables)
+            datasets: [
+                {
+                    label: "Total Cable Dispensado (metros)",
+                    data: totales,  // Datos (total dispensado por referencia)
+                    backgroundColor: "rgba(75, 192, 192, 0.2)",  // Color de las barras
+                    borderColor: "rgba(75, 192, 192, 1)",  // Color del borde de las barras
+                    borderWidth: 1,  // Grosor del borde
+                },
+            ],
+        },
+        options: {
+            maintainAspectRatio: false,  // Permitir ajuste de tamaño personalizado
+            responsive: true,  // Hacer la gráfica responsiva
+            plugins: {
+                title: {
+                    display: true,
+                    text: `Total General: ${totalGeneral} metros`,  // Mostrar el total general en el título de la gráfica
+                    padding: {
+                        top: 10,
+                        bottom: 30,
+                    },
+                    font: {
+                        size: 16,  // Tamaño del texto
+                    },
+                    color: "#333",  // Color del texto del título
+                },
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,  // Comenzar en 0 en el eje Y
+                },
+            },
+        },
+    });
+</script>
+
+{% endblock %}

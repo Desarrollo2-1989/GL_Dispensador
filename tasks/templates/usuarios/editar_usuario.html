@@ -128,12 +128,33 @@
                                     </div>
                                 {% endif %}
                             </div>
+                            <div class="form-group">
+                                <label for="{{ form.estado.id_for_label }}">Estado</label>
+                                {% if form.instance.rol == 'superadmin' %}
+                                    <input type="text" class="form-control" value="Activo" readonly>
+                                    <input type="hidden" name="estado" value="True">  <!-- Mantener el estado como activo -->
+                                {% else %}
+                                    <select class="form-control {% if form.estado.errors %}is-invalid{% endif %}"
+                                            id="{{ form.estado.id_for_label }}"
+                                            name="estado" {% if admin_count <= 1 and form.estado.value == "False" %}disabled{% endif %}>
+                                        <option value="True" {% if form.estado.value %}selected{% endif %}>Activo</option>
+                                        <option value="False" {% if not form.estado.value %}selected{% endif %}>Inactivo</option>
+                                    </select>
+                                    {% endif %}
+                                    {% if form.estado.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.estado.errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>                            
                         </div>
                         <!-- /.card-body -->
 
-                        <div class="card-footer">
-                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                            <a href="{% url 'administrar_usuarios' %}" class="btn btn-secondary">Cancelar</a>
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Guardar Cambios</button>
+                            <a href="{% url 'administrar_usuarios' %}" class="btn btn-secondary btn-lg">Cancelar</a>
                         </div>
                     </form>
                 </div>

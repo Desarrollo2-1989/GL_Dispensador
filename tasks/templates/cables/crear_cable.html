@@ -46,7 +46,7 @@
 
                             <!-- Campo Cantidad Inicial -->
                             <div class="form-group">
-                                <label for="{{ form.cantidad_inicial.id_for_label }}">Cantidad Inical (m)</label>
+                                <label for="{{ form.cantidad_inicial.id_for_label }}">Cantidad Inicial (m)</label>
                                 <input type="number" class="form-control {% if form.cantidad_inicial.errors %}is-invalid{% endif %}" id="{{ form.cantidad_inicial.id_for_label }}" name="cantidad_inicial" value="{{ form.cantidad_inicial.value|default_if_none:'' }}" placeholder="Ingrese la cantidad inicial">
                                 {% if form.cantidad_inicial.errors %}
                                     <div class="invalid-feedback">
