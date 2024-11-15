@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Vista de Espera</title>
+    <style>
+        /* Background */
+        body {
+            background: linear-gradient(135deg, #002244, #004d73); /* Fondo azul */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+
+        /* Card styling */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 100%;
+            animation: fadeIn 1s ease-out;
+            overflow: hidden;
+        }
+
+        /* Header with icon */
+        .card-header {
+            background-color: #002244; /* Azul oscuro */
+            color: #fff;
+            font-size: 1.7rem;
+            padding: 15px;
+            text-align: center;
+        }
+
+        /* Button styling */
+        .btn-finish {
+            background-color: #00203e; /* Azul oscuro */
+            border: none;
+            color: #fff;
+            font-size: 1.1rem;
+            font-weight: bold;
+            padding: 10px 20px;
+            border-radius: 50px;
+            transition: background-color 0.3s ease;
+        }
+
+        /* Button hover effect */
+        .btn-finish:hover {
+            background-color: #012e5b; /* Azul más oscuro */
+            color: #e0f7fa;
+        }
+
+        /* Alert styling */
+        .alert {
+            margin-top: 20px;
+            animation: slideDown 0.5s ease-out;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container d-flex justify-content-center align-items-center vh-100">
+        <div class="card">
+            <div class="card-header">
+                <i class="fas fa-clock"></i> Esperando la dispensación
+            </div>
+            <div class="card-body text-center">
+                <p class="card-text mb-4" style="font-size: 1.1rem;">Por favor, dispensa el cable requerido.</p>
+                
+                {% if error_message %}
+                    <div class="alert alert-danger" role="alert">
+                        <i class="fas fa-exclamation-triangle"></i> {{ error_message }}
+                    </div>
+                {% endif %}
+                
+                <form method="POST" action="{% url 'vista_espera' tablero_id=tablero_id %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-finish">
+                        <i class="fas fa-check-circle"></i> Finalizar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
+</body>
+</html>

@@ -58,7 +58,7 @@
 }
 
 .table thead th {
-    background-color: #000000; /* Fondo azul oscuro */
+    background-color: #000000; 
     color: #ffffff; /* Texto blanco */
     font-weight: bold; /* Negrita para encabezados */
 }

@@ -1,4 +1,4 @@
-{% extends 'adminlte/base.html' %}
+{% extends 'adminlte/base.html' %}  <!-- Indica que esta plantilla hereda de 'adminlte/base.html', permitiendo reutilizar su estructura y diseño. -->
 
 {% block title %}
     Editar Usuario - {{ block.super }}
@@ -164,15 +164,24 @@
 </div>
 
 <script>
+     // Agrega un evento de clic al icono de mostrar/ocultar la contraseña
     document.getElementById('password-toggle-icon').addEventListener('click', function() {
+        // Obtiene el campo de contraseña
         const passwordField = document.getElementById('{{ form.contraseña.id_for_label }}');
+         // Obtiene el icono de mostrar/ocultar la contraseña
         const icon = document.getElementById('password-toggle-icon');
+
+        // Verifica si el campo de contraseña está en modo de contraseña
         if (passwordField.type === 'password') {
+            // Cambia el campo de contraseña a modo de texto
             passwordField.type = 'text';
+            // Cambia el icono a ojo abierto
             icon.classList.remove('fa-eye-slash');
             icon.classList.add('fa-eye');
         } else {
+            // Cambia el campo de contraseña a modo de contraseña
             passwordField.type = 'password';
+            // Cambia el icono a ojo cerrado
             icon.classList.remove('fa-eye');
             icon.classList.add('fa-eye-slash');
         }

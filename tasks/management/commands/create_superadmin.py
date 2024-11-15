@@ -12,7 +12,7 @@ class Command(BaseCommand):
                 cedula='0000000000',
                 nombre_persona='Admin Super',
                 nombre_usuario='superadmin',
-                contraseña=make_password('12345678'),
+                contraseña=make_password('12345678'), 
                 rol='superadmin'
             )
             self.stdout.write(self.style.SUCCESS('Superadmin creado con éxito')) # Mostrar un mensaje de éxito en la consola

@@ -15,7 +15,7 @@
     </a>
 </div>
 <div class="card">
-    <h1 class="page-title text-center mb-4">Operario: {{ operario }} - Tablero: {{ tablero.identificador }} </h1>
+    <h1 class="page-title text-center mb-4">Operario: {{ operario }} - Tablero: {{ tablero.identificador }}</h1>
    
     <div class="table-responsive">
         <!-- Tabla de cables dispensados -->
@@ -23,18 +23,22 @@
             <thead class="table-dark">
                 <tr>
                     <th>Referencia del Cable</th>
-                    <th>Total Dispensado (metros)</th>
+                    <th>Cantidad sin Reproceso (metros)</th>
+                    <th>Cantidad Reproceso (metros)</th>
+                    <th>Total (metros)</th>
                 </tr>
             </thead>
             <tbody>
                 {% for cable in cables_dispensados %}
                 <tr>
                     <td>{{ cable.cable__referencia }}</td>
-                    <td>{{ cable.total_dispensado }}</td>
+                    <td>{{ cable.total_dispensado|default:0 }}</td>
+                    <td>{{ cable.total_reproceso|default:0 }}</td>
+                    <td>{{ cable.total|default:0 }}</td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="2" class="text-center">
+                    <td colspan="4" class="text-center">
                         No hay cables dispensados registrados
                     </td>
                 </tr>
@@ -44,56 +48,122 @@
     </div>
 </div>
 
-<!-- Sección para la gráfica -->
-<div class="chart-container" style="max-width: 1200px; margin: auto;">
-    <canvas id="cableChart" width="800" height="400"></canvas> <!-- Ajuste del tamaño de la gráfica -->
+<!-- Sección para ambas gráficas -->
+<div class="d-flex justify-content-around mt-5">
+     <!-- Gráfica de barras -->
+     <div style="max-width: 700px;">
+        <canvas id="cableBarChart" width="800" height="500"></canvas>
+    </div>
+    <!-- Gráfica de pastel -->
+    <div style="max-width: 350px;">
+        <canvas id="cablePieChart" width="400" height="400"></canvas>
+    </div>
 </div>
 
 <script>
-    // Datos de la gráfica que vienen desde la vista
-    const referencias = JSON.parse("{{ referencias_json|escapejs }}");
-    const totales = JSON.parse("{{ totales_json|escapejs }}");
-    const totalGeneral = "{{ total_cables_dispensados }}";  // Total general desde el contexto
+    // Datos de la gráfica que vienen desde la vista en formato JSON
+    const totales = JSON.parse("{{ totales_json|escapejs }}"); // Totales dispensados sin reproceso
+    const totalesReproceso = JSON.parse("{{ totales_reproceso_json|escapejs }}"); // Totales de reproceso
+    const referencias = JSON.parse("{{ referencias_json|escapejs }}"); // Referencias de cables
 
-    // Crear la gráfica usando Chart.js
-    const ctx = document.getElementById("cableChart").getContext("2d");
-    const cableChart = new Chart(ctx, {
-        type: "bar",  // Tipo de gráfica
+    // Calcular los totales generales
+    const totalDispensado = totales.reduce((a, b) => a + b, 0); // Sumar los totales dispensados
+    const totalReproceso = totalesReproceso.reduce((a, b) => a + b, 0); // Sumar los totales de reproceso
+
+    // Crear la gráfica de pastel usando Chart.js
+    const ctxPie = document.getElementById("cablePieChart").getContext("2d");
+    const cablePieChart = new Chart(ctxPie, {
+        type: "pie",
         data: {
-            labels: referencias,  // Etiquetas (referencias de cables)
-            datasets: [
-                {
-                    label: "Total Cable Dispensado (metros)",
-                    data: totales,  // Datos (total dispensado por referencia)
-                    backgroundColor: "rgba(75, 192, 192, 0.2)",  // Color de las barras
-                    borderColor: "rgba(75, 192, 192, 1)",  // Color del borde de las barras
-                    borderWidth: 1,  // Grosor del borde
-                },
-            ],
+            labels: ["Total sin Reprocesos", "Total de Reprocesos"],
+            datasets: [{
+                label: "Distribución de Dispensas",
+                data: [totalDispensado, totalReproceso],
+                backgroundColor: ["rgba(75, 192, 192, 0.6)", "rgba(255, 99, 132, 0.6)"],
+                borderColor: ["rgba(75, 192, 192, 1)", "rgba(255, 99, 132, 1)"],
+                borderWidth: 1
+            }]
         },
         options: {
-            maintainAspectRatio: false,  // Permitir ajuste de tamaño personalizado
-            responsive: true,  // Hacer la gráfica responsiva
+            responsive: true,
             plugins: {
                 title: {
                     display: true,
-                    text: `Total General: ${totalGeneral} metros`,  // Mostrar el total general en el título de la gráfica
-                    padding: {
-                        top: 10,
-                        bottom: 30,
-                    },
-                    font: {
-                        size: 16,  // Tamaño del texto
-                    },
-                    color: "#333",  // Color del texto del título
+                    text: `Total General: ${totalDispensado + totalReproceso} metros`,
+                    padding: { top: 10, bottom: 30 },
+                    font: { size: 16 },
+                    color: "#333"
                 },
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return tooltipItem.label + ': ' + tooltipItem.raw + ' metros';
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    // Crear la gráfica de barras para mostrar los datos de cada referencia
+    const ctxBar = document.getElementById("cableBarChart").getContext("2d");
+    const cableBarChart = new Chart(ctxBar, {
+        type: "bar",
+        data: {
+            labels: referencias,
+            datasets: [
+                {
+                    label: "Cantidad sin Reproceso",
+                    data: totales,
+                    backgroundColor: "rgba(75, 192, 192, 0.6)",
+                    borderColor: "rgba(75, 192, 192, 1)",
+                    borderWidth: 1
+                },
+                {
+                    label: "Cantidad Reproceso",
+                    data: totalesReproceso,
+                    backgroundColor: "rgba(255, 99, 132, 0.6)",
+                    borderColor: "rgba(255, 99, 132, 1)",
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Cantidad por Referencia',
+                    padding: { top: 10, bottom: 30 },
+                    font: { size: 16 },
+                    color: "#333"
+                },
+                legend: { position: 'top' },
+                tooltip: {
+                    callbacks: {
+                        label: function(tooltipItem) {
+                            return tooltipItem.dataset.label + ': ' + tooltipItem.raw + ' metros';
+                        }
+                    }
+                }
             },
             scales: {
-                y: {
-                    beginAtZero: true,  // Comenzar en 0 en el eje Y
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Referencias de Cable'
+                    }
                 },
-            },
-        },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Metros Dispensados'
+                    },
+                    beginAtZero: true
+                }
+            }
+        }
     });
 </script>
 

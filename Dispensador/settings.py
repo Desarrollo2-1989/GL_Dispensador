@@ -111,12 +111,16 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
-
+# Zona horaria del proyecto.
+# 'America/Bogota' establece la hora según la región de Bogotá, Colombia.
 TIME_ZONE = 'America/Bogota'
 
+# Indica si se debe habilitar la internacionalización en el proyecto.
+# Esto permite la traducción de textos y otros elementos según la configuración regional.
 USE_I18N = True
 
+# Indica si se debe utilizar soporte para zonas horarias.
+# Cuando está habilitado, Django manejará las fechas y horas teniendo en cuenta las zonas horarias.
 USE_TZ = True
 
 

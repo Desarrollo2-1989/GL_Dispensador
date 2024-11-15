@@ -1,4 +1,4 @@
-/* estilos.css */
+/* estilos_registros.css */
 
 /* Estilos generales */
 
@@ -126,7 +126,7 @@
 
 body {
     font-family: 'Roboto', sans-serif;
-    background-color: #c5c5c9; /* Fondo negro */
+    background-color: #c5c5c9; /* Fondo gris claro */
     color: #ffffff; /* Texto en blanco */
 }
 

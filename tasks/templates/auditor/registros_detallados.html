@@ -1,78 +1,173 @@
 {% extends 'auditor/base.html' %}
 {% load i18n %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registro de Dispensas</title>
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
-    <link href="{% static 'css/auditor.css' %}" rel="stylesheet">
-</head>
+{% block title %}
+Registro de Dispensas - {{ block.super }}
+{% endblock %}
 
-<body>
-    {% block content %}
-    <div class="card">
-        <div class="card-body">
-            <h1 class="mb-4 text-center">Registro Detallado</h1>
+{% block page_name %}
+    <h1 class="page-title" style="color: rgb(1, 41, 110);">Registro Detallado</h1>
+{% endblock %}
 
-            <!-- Buscador -->
-            <div class="card-header">
-                <form method="GET" class="input-group mt-3" style="max-width: 400px; margin-left: -20px;">
-                    <div class="input-group">
-                        <input type="text" name="q" class="form-control" placeholder="Buscar por Operario o Tablero"
-                            value="{{ query|default:'' }}">
-                        <button type="submit" class="btn btn-outline-primary">
-                            <i class="fas fa-search"></i> Buscar
-                        </button>
-                    </div>
-                </form>
+{% block content %}
+<!-- Carga del archivo CSS estático personalizado -->
+<link rel="stylesheet" href="{% static 'css/admin.css' %}">
+
+<div class="card">
+    <div class="card-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <h3 class="card-title">Listado de Registros</h3>
+        </div>
+        <!-- Formulario de filtros -->
+        <form method="GET" class="row mt-3" style="max-width: 100%; display: flex; flex-wrap: wrap;">
+            <!-- Filtro Operario -->
+            <div class="col-md-2 mb-2">
+                <label for="operario">Operario:</label>
+                <select name="operario" id="operario" class="form-control">
+                    <option value="">Seleccionar Operario</option>
+                    {% for operario_item in operarios %}
+                        <option value="{{ operario_item.usuario__nombre_usuario }}" {% if operario == operario_item.usuario__nombre_usuario %}selected{% endif %}>
+                            {{ operario_item.usuario__nombre_usuario }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
-            
-
-            <!-- Tabla de Registros Filtrados -->
-            <div class="table-responsive">
-                <table class="table table-striped">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Operario</th>
-                            <th>Proyecto</th>
-                            <th>Tablero</th>
-                            <th>Referencia del Cable</th>
-                            <th>Descripción del Cable</th>
-                            <th>Cantidad dispensada (metros)</th>
-                            <th>Fecha</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for registro in registros %}
-                        <tr>
-                            <td>{{ registro.usuario.nombre_usuario }}</td>
-                            <td>{{ registro.proyecto.proyecto }}</td>
-                            <td>{{ registro.tablero.identificador }}</td>
-                            <td>{{ registro.cable.referencia }}</td>
-                            <td>{{ registro.cable.descripcion }}</td>
-                            <td>{{ registro.cantidad_dispensada }}</td>
-                            <td>{{ registro.fecha|date:"d/m/Y h:i A" }}</td>
-                        </tr>
-                        {% empty %}
-                        <tr>
-                            <td colspan="7">No hay registros disponibles.</td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+        
+            <!-- Filtro Proyecto -->
+            <div class="col-md-2 mb-2">
+                <label for="proyecto">Proyecto:</label>
+                <select name="proyecto" id="proyecto" class="form-control">
+                    <option value="">Seleccionar Proyecto</option>
+                    {% for proyecto_item in proyectos %}
+                        <option value="{{ proyecto_item.proyecto__proyecto }}" {% if proyecto == proyecto_item.proyecto__proyecto %}selected{% endif %}>
+                            {{ proyecto_item.proyecto__proyecto }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
+        
+            <!-- Filtro Tablero -->
+            <div class="col-md-2 mb-2">
+                <label for="tablero">Tablero:</label>
+                <select name="tablero" id="tablero" class="form-control">
+                    <option value="">Seleccionar Tablero</option>
+                    {% for tablero_item in tableros %}
+                        <option value="{{ tablero_item.tablero__identificador }}" {% if tablero == tablero_item.tablero__identificador %}selected{% endif %}>
+                            {{ tablero_item.tablero__identificador }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+        
+            <!-- Filtro Reproceso -->
+            <div class="col-md-2 mb-2">
+                <label for="reproceso">Reproceso:</label>
+                <select name="reproceso" id="reproceso" class="form-control">
+                    <option value="">Seleccionar Reproceso</option>
+                    <option value="True" {% if reproceso == "True" %}selected{% endif %}>Sí</option>
+                    <option value="False" {% if reproceso == "False" %}selected{% endif %}>No</option>
+                </select>
+            </div>
+        
+            <!-- Filtro Fecha -->
+            <div class="col-md-2 mb-2">
+                <label for="fecha">Fecha:</label>
+                <input type="date" name="fecha" id="fecha" class="form-control" value="{{ fecha }}">
+            </div>
+        
+            <!-- Botón de Enviar -->
+            <div class="col-md-2 mb-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-search"></i> Filtrar
+                </button>
+            </div>
+        </form>
+        
+    </div>
+    <!-- /.card-header -->
+    <div class="card-body">
+        <div class="table-responsive">
+            <!-- Tabla de registros de dispensas -->
+            <table class="table table-hover table-striped">
+                <thead>
+                    <tr>
+                        <th>Operario</th>
+                        <th>Proyecto</th>
+                        <th>Tablero</th>
+                        <th>Referencia del Cable</th>
+                        <th>Descripción del Cable</th>
+                        <th>Cantidad dispensada (metros)</th>
+                        <th>Reproceso</th>
+                        <th>Fecha</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for registro in page_obj %}
+                    <tr>
+                        <td>{{ registro.usuario.nombre_usuario }}</td>
+                        <td>{{ registro.proyecto.proyecto }}</td>
+                        <td>{{ registro.tablero.identificador }}</td>
+                        <td>{{ registro.cable.referencia }}</td>
+                        <td>{{ registro.cable.descripcion }}</td>
+                        <td>{{ registro.cantidad_dispensada }}</td>
+                        <td>{{ registro.reproceso|yesno:"Sí,No" }}</td>
+                        <td>{{ registro.fecha|date:"d/m/Y h:i A" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center">No hay registros disponibles.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <div class="mt-4">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?operario={{ operario }}&tablero={{ tablero }}&reproceso={{ reproceso }}&fecha={{ fecha }}&page=1" aria-label="First">
+                            <span aria-hidden="true">&laquo;&laquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?operario={{ operario }}&tablero={{ tablero }}&reproceso={{ reproceso }}&fecha={{ fecha }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
+                    </li>
+                    {% else %}
+                    <li class="page-item"><a class="page-link" href="?operario={{ operario }}&tablero={{ tablero }}&reproceso={{ reproceso }}&fecha={{ fecha }}&page={{ num }}">{{ num }}</a></li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?operario={{ operario }}&tablero={{ tablero }}&reproceso={{ reproceso }}&fecha={{ fecha }}&page={{ page_obj.next_page_number }}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?operario={{ operario }}&tablero={{ tablero }}&reproceso={{ reproceso }}&fecha={{ fecha }}&page={{ page_obj.paginator.num_pages }}" aria-label="Last">
+                            <span aria-hidden="true">&raquo;&raquo;</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
         </div>
     </div>
+    <!-- /.card-body -->
+</div>
+<!-- /.card -->
 
-    <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    {% endblock %}
-</body>
-
-</html>
+{% endblock %}

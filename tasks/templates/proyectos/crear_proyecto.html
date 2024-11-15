@@ -1,7 +1,7 @@
 {% extends 'adminlte/base_proyectos.html' %}
 
 {% block title %}
-    Crear Proyecto - {{ block.super }}
+    Crear Proyecto {{ block.super }}
 {% endblock %}
 
 {% block content %}
@@ -11,22 +11,24 @@
             <div class="col-md-8">
                 <div class="card card-primary">
                     <div class="card-header">
-                        <h3 class="card-title">Crear Proyecto</h3>
+                        <h3 class="card-title">Crear Proyecto</h3>  <!-- Título del formulario -->
                     </div>
                     
                     <!-- Formulario para crear proyecto -->
                     <form method="POST">
-                        {% csrf_token %}
+                        {% csrf_token %}  <!-- Token de seguridad para proteger el formulario contra ataques CSRF -->
                         <div class="card-body">
                             <div class="form-group">
                                 <label for="{{ form.tipo_proyecto.id_for_label }}">Tipo Proyecto</label>
-                                <select class="form-control {% if form.tipo_proyecto.errors %}is-invalid{% endif %}" id="{{ form.tipo_proyecto.id_for_label }}" name="tipo_proyecto">
-                                    <option value="">Seleccione un tipo de proyecto</option>
-                                    <option value="OT" {% if form.tipo_proyecto.value == 'OT' %}selected{% endif %}>OT</option>
-                                    <option value="OI" {% if form.tipo_proyecto.value == 'OI' %}selected{% endif %}>OI</option>
+                                <select class="form-control {% if form.tipo_proyecto.errors %}is-invalid{% endif %}" 
+                                        id="{{ form.tipo_proyecto.id_for_label }}" 
+                                        name="tipo_proyecto">
+                                    <option value="">Seleccione un tipo de proyecto</option>  <!-- Opción por defecto que invita al usuario a seleccionar un tipo de proyecto -->
+                                    <option value="OT" {% if form.tipo_proyecto.value == 'OT' %}selected{% endif %}>OT</option>  <!-- Opción para el tipo de proyecto 'OT', seleccionada si el valor actual es 'OT' -->
+                                    <option value="OI" {% if form.tipo_proyecto.value == 'OI' %}selected{% endif %}>OI</option>  <!-- Opción para el tipo de proyecto 'OI', seleccionada si el valor actual es 'OI' -->
                                 </select>
                                 {% if form.tipo_proyecto.errors %}
-                                    <div class="invalid-feedback">
+                                    <div class="invalid-feedback">  <!-- Mensaje de error si hay errores en el campo tipo_proyecto -->
                                         {% for error in form.tipo_proyecto.errors %}
                                             <p>{{ error }}</p>
                                         {% endfor %}
@@ -36,9 +38,13 @@
                             
                             <div class="form-group">
                                 <label for="{{ form.numero.id_for_label }}">Número</label>
-                                <input type="text" class="form-control {% if form.numero.errors %}is-invalid{% endif %}" id="{{ form.numero.id_for_label }}" name="numero" value="{{ form.numero.value|default_if_none:'' }}" placeholder="Ingrese el número del proyecto">
+                                <input type="text" class="form-control {% if form.numero.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.numero.id_for_label }}" 
+                                       name="numero" 
+                                       value="{{ form.numero.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese el número del proyecto">
                                 {% if form.numero.errors %}
-                                    <div class="invalid-feedback">
+                                    <div class="invalid-feedback">  <!-- Mensaje de error si hay errores en el campo número -->
                                         {% for error in form.numero.errors %}
                                             <p>{{ error }}</p>
                                         {% endfor %}
@@ -49,8 +55,8 @@
                         <!-- /.card-body -->
 
                         <div class="card-footer text-center">
-                            <button type="submit" class="btn btn-primary btn-lg">Crear Proyecto</button>
-                            <a href="{% url 'manejo_proyectos' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                            <button type="submit" class="btn btn-primary btn-lg">Crear Proyecto</button>  <!-- Botón para enviar el formulario -->
+                            <a href="{% url 'manejo_proyectos' %}" class="btn btn-secondary btn-lg">Cancelar</a>  <!-- Enlace para cancelar y volver a la lista de proyectos -->
                         </div>
                     </form>
                 </div>

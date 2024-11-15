@@ -1,0 +1,84 @@
+{% extends 'adminlte/base.html' %}
+
+{% block title %}
+    Editar Configuración de Cable {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Editar Configuración de Cable</h3> <!-- Título del formulario -->
+                    </div>
+                    
+                    <form method="POST">
+                        {% csrf_token %}  <!-- Token de seguridad -->
+                        <div class="card-body">
+                            <div class="form-group">
+                                <label for="{{ form.cable.id_for_label }}">Cable</label>
+                                <select class="form-control {% if form.cable.errors %}is-invalid{% endif %}" 
+                                        id="{{ form.cable.id_for_label }}" name="cable">
+                                    <option value="">Seleccione un cable</option>
+                                    {% for cable in form.cable.field.queryset %}
+                                        <option value="{{ cable.pk }}" 
+                                                {% if cable.pk == form.instance.cable.pk %}selected{% endif %}>
+                                            {{ cable.referencia }}  <!-- Mostrar solo la referencia -->
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                {% if form.cable.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cable.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.esp.id_for_label }}">ESP</label>
+                                <input type="text" class="form-control {% if form.esp.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.esp.id_for_label }}" 
+                                       name="esp" 
+                                       value="{{ form.esp.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese ESP">
+                                {% if form.esp.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.esp.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+
+                            <div class="form-group">
+                                <label for="{{ form.encoder.id_for_label }}">Encoder</label>
+                                <input type="text" class="form-control {% if form.encoder.errors %}is-invalid{% endif %}" 
+                                       id="{{ form.encoder.id_for_label }}" 
+                                       name="encoder" 
+                                       value="{{ form.encoder.value|default_if_none:'' }}" 
+                                       placeholder="Ingrese Encoder">
+                                {% if form.encoder.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.encoder.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-primary btn-lg">Guardar Cambios</button>
+                            <a href="{% url 'listar_configuraciones_cable' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

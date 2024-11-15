@@ -31,7 +31,7 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false" title="{% trans 'User Menu' %}">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false" title="{% trans 'User  Menu' %}">
                             <i class="fas fa-user me-1"></i>
                             <span class="d-none d-sm-inline">{{ request.COOKIES.user_role }}</span>
                         </a>
@@ -101,6 +101,7 @@
                                             <th>Cantidad Restante (m)</th>
                                             <th>Stock Mínimo (m)</th>
                                             <th>Seleccionar</th>
+                                            <th>Reproceso</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -114,6 +115,10 @@
                                             <td class="text-center">
                                                 <input type="radio" name="cable" value="{{ cable.referencia }}" id="cable{{ cable.referencia }}" class="custom-checkbox">
                                                 <label for="cable{{ cable.referencia }}"></label>
+                                            </td>
+                                            <td class="text-center">
+                                                <input type="checkbox" name="reproceso_{{ cable.referencia }}" id="reproceso_{{ cable.referencia }}" class="custom-checkbox" onclick="toggleReproceso(this)">
+                                                <label for="reproceso_{{ cable.referencia }}">¿Reproceso?</label>
                                             </td>
                                         </tr>
                                         {% empty %}
@@ -135,6 +140,21 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        function toggleReproceso(selected) {
+            // Obtener todos los checkboxes de reproceso
+            const reprocesos = document.querySelectorAll('input[type="checkbox"][name^="reproceso_"]');
+
+            // Si el checkbox seleccionado está marcado, desmarcar los demás
+            if (selected.checked) {
+                reprocesos.forEach(reproceso => {
+                    if (reproceso !== selected) {
+                        reproceso.checked = false; // Desmarcar otros checkboxes
+                    }
+                });
+            }
+        }
+    </script>
     {% endblock %}
 </body>
 
