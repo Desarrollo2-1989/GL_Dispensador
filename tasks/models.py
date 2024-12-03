@@ -67,7 +67,6 @@ class Cables(models.Model):
     cantidad_inicial = models.IntegerField()  # Cantidad inicial del cable disponible
     cantidad_restante = models.IntegerField(default=0)  # Cantidad restante del cable después de dispensaciones
     stock_minimo = models.IntegerField(default=1)  # Nivel mínimo de stock que se debe mantener
-    ultima_advertencia = models.DateTimeField(null=True, blank=True)  # Fecha de la última advertencia sobre el stock
 
     # Métodos
     def save(self, *args, **kwargs):  # Método para guardar el objeto en la base de datos
@@ -86,8 +85,6 @@ class Cables(models.Model):
 
     def necesita_advertencia(self):  # Método para verificar si se necesita emitir una advertencia sobre el stock
         if self.verificar_stock_minimo():  # Comprueba si se está por debajo del stock mínimo
-            if self.ultima_advertencia is None or timezone.now() - self.ultima_advertencia > timezone.timedelta(days=1):
-                # Verifica si no se ha emitido una advertencia o si han pasado más de 1 día desde la última advertencia
                 return True  # Devuelve True si necesita advertencia
         return False  # Devuelve False si no necesita advertencia
 

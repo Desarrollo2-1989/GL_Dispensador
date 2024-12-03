@@ -557,7 +557,6 @@ def cables(request):
     for cable in cables_bajo_stock:
         if cable.necesita_advertencia():  # Verificar si se necesita advertencia
             enviar_correo_stock_bajo(cable)  # Enviar correo de advertencia
-            cable.ultima_advertencia = timezone.now()  # Actualizar la fecha de la última advertencia
             cable.save()  # Guardar el cable actualizado
 
     paginator = Paginator(setear_cables, 5)  # Paginador para 5 cables por página
@@ -718,8 +717,7 @@ def on_message(client, userdata, msg):
 
                         # Verificar si el stock está por debajo del mínimo
                         if cable.verificar_stock_minimo():
-                            enviar_correo_stock_bajo(cable)  # Enviar advertencia de stock bajo
-                            cable.ultima_advertencia = timezone.now()  # Actualizar última advertencia
+                            enviar_correo_stock_bajo(cable)  # Enviar advertencia de stock bajo                           
                             cable.save()
 
                         print(f"Stock del cable {cable_referencia} actualizado. Nueva cantidad restante: {cable.cantidad_restante}")

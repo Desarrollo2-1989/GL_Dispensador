@@ -294,7 +294,6 @@ class CableForm(forms.ModelForm):
             "descripcion",
             "cantidad_inicial",
             "stock_minimo",
-            "ultima_advertencia",
         ]
 
         # Configuración de widgets para los campos del formulario
@@ -323,13 +322,6 @@ class CableForm(forms.ModelForm):
                     "placeholder": "Ingrese el stock mínimo permitido",  # Texto de ayuda
                 }
             ),
-            "ultima_advertencia": forms.DateTimeInput(  # Widget para el campo de última advertencia
-                attrs={
-                    "class": "form-control",  # Clase CSS para el estilo
-                    "placeholder": "Última advertencia",  # Texto de ayuda
-                    "type": "datetime-local",  # Tipo de input para fecha y hora
-                }
-            ),
         }
 
         # Etiquetas para los campos del formulario
@@ -338,7 +330,6 @@ class CableForm(forms.ModelForm):
             "descripcion": "Descripción",
             "cantidad_inicial": "Cantidad Inicial",
             "stock_minimo": "Stock Mínimo",
-            "ultima_advertencia": "Última Advertencia",
         }
 
     # Método para validar la cantidad inicial y el stock mínimo
