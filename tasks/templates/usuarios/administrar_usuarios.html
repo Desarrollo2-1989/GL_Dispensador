@@ -7,23 +7,21 @@ Administrar Usuarios - {{ block.super }}
 {% endblock %}
 
 {% block page_name %}
-    <h1 class="page-title" style="color: rgb(1, 41, 110);">Administrar Usuarios</h1>
+<h1 class="page-title" style="color: rgb(1, 41, 110);">Administrar Usuarios</h1>
 {% endblock %}
 
 {% block content %}
-<!-- Carga del archivo CSS estático personalizado -->
+<!-- Estilo personalizado -->
 <link rel="stylesheet" href="{% static 'css/admin.css' %}">
 
 <div class="card">
     <div class="card-header">
         <div class="d-flex justify-content-between align-items-center">
-            <!-- Título y botón para crear un nuevo usuario -->
             <h3 class="card-title">Listado de Usuarios</h3>
             <a href="{% url 'crear_usuario' %}" class="btn btn-primary">
                 <i class="fas fa-user-plus"></i> Crear Usuario
             </a>
         </div>
-        <!-- Formulario de búsqueda -->
         <form method="GET" class="input-group mt-3" style="max-width: 400px;">
             <input type="text" name="q" class="form-control" placeholder="Buscar por cédula, nombre, usuario o rol" value="{{ query|default:'' }}">
             <div class="input-group-append">
@@ -33,11 +31,9 @@ Administrar Usuarios - {{ block.super }}
             </div>
         </form>
     </div>
-    <!-- /.card-header -->
 
     <div class="card-body">
         <div class="table-responsive">
-            <!-- Tabla de usuarios -->
             <table class="table table-hover table-striped">
                 <thead>
                     <tr>
@@ -45,7 +41,7 @@ Administrar Usuarios - {{ block.super }}
                         <th>Nombre Persona</th>
                         <th>Nombre Usuario</th>
                         <th>Rol</th>
-                        <th >Estado</th>
+                        <th>Estado</th>
                         <th class="text-center">Acciones</th>
                     </tr>
                 </thead>
@@ -58,22 +54,19 @@ Administrar Usuarios - {{ block.super }}
                         <td>{{ usuario.rol }}</td>
                         <td>
                             {% if usuario.estado %}
-                                <span class="badge badge-success">Activo</span>
+                            <span class="badge badge-success">Activo</span>
                             {% else %}
-                                <span class="badge badge-danger">Inactivo</span>
+                            <span class="badge badge-danger">Inactivo</span>
                             {% endif %}
                         </td>
                         <td class="text-center">
-                            <!-- Botones de acción para editar y eliminar usuarios -->
                             <a href="{% url 'editar_usuario' usuario.cedula %}" class="btn btn-info btn-sm">
                                 <i class="fas fa-edit"></i> Editar
                             </a>
-                            <button class="btn btn-danger btn-sm"
-                                onclick="confirmarEliminacion('{{ usuario.cedula }}')">
+                            <button class="btn btn-danger btn-sm" onclick="confirmarEliminacion('{{ usuario.cedula }}')">
                                 <i class="fas fa-trash-alt"></i> Eliminar
                             </button>
-                            <form id="eliminarUsuarioForm_{{ usuario.cedula }}" style="display: none;"
-                                action="{% url 'eliminar_usuario' usuario.cedula %}" method="post">
+                            <form id="eliminarUsuarioForm_{{ usuario.cedula }}" style="display: none;" action="{% url 'eliminar_usuario' usuario.cedula %}" method="post">
                                 {% csrf_token %}
                             </form>
                         </td>
@@ -88,57 +81,55 @@ Administrar Usuarios - {{ block.super }}
         </div>
 
         <!-- Paginación -->
-        <div class="mt-4">
-            <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="First">
-                            <span aria-hidden="true">&laquo;&laquo;</span>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    {% endif %}
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="Primera">
+                        <span aria-hidden="true">&laquo;&laquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}" aria-label="Anterior">
+                        <span aria-hidden="true">&laquo;</span>
+                    </a>
+                </li>
+                {% endif %}
 
-                    {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
-                    </li>
-                    {% else %}
-                    <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
-                    {% endif %}
-                    {% endfor %}
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+                {% elif num < page_obj.number|add:'-3' and num == 2 %}
+                <li class="page-item"><span class="page-link">...</span></li>
+                {% elif num > page_obj.number|add:'3' and num == page_obj.paginator.num_pages|add:'-1' %}
+                <li class="page-item"><span class="page-link">...</span></li>
+                {% endif %}
+                {% endfor %}
 
-                    {% if page_obj.has_next %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}" aria-label="Last">
-                            <span aria-hidden="true">&raquo;&raquo;</span>
-                        </a>
-                    </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}" aria-label="Siguiente">
+                        <span aria-hidden="true">&raquo;</span>
+                    </a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}" aria-label="Última">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
-    <!-- /.card-body -->
 </div>
-<!-- /.card -->
-
 {% endblock %}
 
 {% block extra_js %}
 <script>
-    // Función para confirmar la eliminación de un usuario
     function confirmarEliminacion(usuarioId) {
         if (confirm('¿Estás seguro de que deseas eliminar este usuario?')) {
             document.getElementById('eliminarUsuarioForm_' + usuarioId).submit();

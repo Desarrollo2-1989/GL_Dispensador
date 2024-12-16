@@ -19,38 +19,40 @@
 
     <!-- Tabla de datos -->
     <div class="table-responsive">
-        <table class="table table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Referencia de Cable</th>
-                    <th>Cantidad sin Reproceso (metros)</th>
-                    <th>Cantidad Reproceso (metros)</th>
-                    <th>Total (metros)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for referencia_cable in referencias_cables %}
-                <tr>
-                    <td>{{ referencia_cable.cable__referencia }}</td>
-                    <td>{{ referencia_cable.total_dispensada|default:0 }}</td> <!-- Total sin reprocesos -->
-                    <td>{{ referencia_cable.total_reproceso|default:0 }}</td> <!-- Total reproceso -->
-                    <td>{{ referencia_cable.total|default:0 }}</td> <!-- Total general -->
-                </tr>
-                {% endfor %}
-                {% if referencias_cables.count == 0 %}
-                <tr>
-                    <td colspan="4" class="text-center">No se encontraron referencias de cables.</td>
-                </tr>
-                {% endif %}
-            </tbody>
-        </table>
+        <div class="card-body">
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Referencia de Cable</th>
+                        <th>Cantidad sin Reproceso (metros)</th>
+                        <th>Cantidad Reproceso (metros)</th>
+                        <th>Total (metros)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for referencia_cable in referencias_cables %}
+                    <tr>
+                        <td>{{ referencia_cable.cable__referencia }}</td>
+                        <td>{{ referencia_cable.total_dispensada|default:0 }}</td> <!-- Total sin reprocesos -->
+                        <td>{{ referencia_cable.total_reproceso|default:0 }}</td> <!-- Total reproceso -->
+                        <td>{{ referencia_cable.total|default:0 }}</td> <!-- Total general -->
+                    </tr>
+                    {% endfor %}
+                    {% if referencias_cables.count == 0 %}
+                    <tr>
+                        <td colspan="4" class="text-center">No se encontraron referencias de cables.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
 </div>
 
 <div class="d-flex justify-content-around mt-5">
-      <!-- Nueva gráfica de barras -->
-      <div style="max-width: 700px;">
+    <!-- Nueva gráfica de barras -->
+    <div style="max-width: 700px;">
         <canvas id="cableBarChart" width="800" height="500"></canvas>
     </div>
 

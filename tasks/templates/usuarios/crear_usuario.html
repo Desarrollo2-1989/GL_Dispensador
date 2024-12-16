@@ -106,11 +106,11 @@
                                         name="rol">
                                     <option value="">Seleccione un rol</option>
                                     {% for value, label in form.fields.rol.choices %}
-                                        {% if request.COOKIES.user_role == 'superadmin' %}
+                                        {% if request.session.user_role == 'superadmin' %}
                                             {% if value != 'superadmin' %}
                                                 <option value="{{ value }}" {% if form.rol.value == value %}selected{% endif %}>{{ label }}</option>
                                             {% endif %}
-                                        {% elif request.COOKIES.user_role == 'admin' %}
+                                        {% elif request.session.user_role == 'admin' %}
                                             {% if value != 'superadmin' %}
                                                 <option value="{{ value }}" {% if form.rol.value == value %}selected{% endif %}>{{ label }}</option>
                                             {% endif %}

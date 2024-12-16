@@ -16,42 +16,44 @@
 </div>
 <div class="card">
     <h1 class="page-title text-center mb-4">Operario: {{ operario }} - Tablero: {{ tablero.identificador }}</h1>
-   
+
     <div class="table-responsive">
-        <!-- Tabla de cables dispensados -->
-        <table class="table table-striped">
-            <thead class="table-dark">
-                <tr>
-                    <th>Referencia del Cable</th>
-                    <th>Cantidad sin Reproceso (metros)</th>
-                    <th>Cantidad Reproceso (metros)</th>
-                    <th>Total (metros)</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for cable in cables_dispensados %}
-                <tr>
-                    <td>{{ cable.cable__referencia }}</td>
-                    <td>{{ cable.total_dispensado|default:0 }}</td>
-                    <td>{{ cable.total_reproceso|default:0 }}</td>
-                    <td>{{ cable.total|default:0 }}</td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center">
-                        No hay cables dispensados registrados
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <div class="card-body">
+            <!-- Tabla de cables dispensados -->
+            <table class="table table-striped">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Referencia del Cable</th>
+                        <th>Cantidad sin Reproceso (metros)</th>
+                        <th>Cantidad Reproceso (metros)</th>
+                        <th>Total (metros)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cable in cables_dispensados %}
+                    <tr>
+                        <td>{{ cable.cable__referencia }}</td>
+                        <td>{{ cable.total_dispensado|default:0 }}</td>
+                        <td>{{ cable.total_reproceso|default:0 }}</td>
+                        <td>{{ cable.total|default:0 }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">
+                            No hay cables dispensados registrados
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
 
 <!-- Sección para ambas gráficas -->
 <div class="d-flex justify-content-around mt-5">
-     <!-- Gráfica de barras -->
-     <div style="max-width: 700px;">
+    <!-- Gráfica de barras -->
+    <div style="max-width: 700px;">
         <canvas id="cableBarChart" width="800" height="500"></canvas>
     </div>
     <!-- Gráfica de pastel -->
@@ -97,7 +99,7 @@
                 legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
-                        label: function(tooltipItem) {
+                        label: function (tooltipItem) {
                             return tooltipItem.label + ': ' + tooltipItem.raw + ' metros';
                         }
                     }
@@ -142,7 +144,7 @@
                 legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
-                        label: function(tooltipItem) {
+                        label: function (tooltipItem) {
                             return tooltipItem.dataset.label + ': ' + tooltipItem.raw + ' metros';
                         }
                     }

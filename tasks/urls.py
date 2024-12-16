@@ -5,7 +5,7 @@ from .views import (
     administrar_usuarios, crear_usuario, editar_usuario, eliminar_usuario,
     manejo_proyectos, crear_proyecto, editar_proyecto, eliminar_proyecto,
     tableros, crear_tablero, editar_tablero, eliminar_tablero, cargar_csv_tableros,
-    cables, crear_cable, editar_cable, eliminar_cable, 
+    cables, crear_cable, editar_cable, eliminar_cable, reabastecer_cable,
     operario, ver_items_proyecto, ver_cables_tablero,
 )
 
@@ -47,6 +47,7 @@ urlpatterns = [
     path('cables/', views.cables, name='cables'),
     path('crear_cable/', views.crear_cable, name='crear_cable'),
     path('editar_cable/<str:referencia>/', views.editar_cable, name='editar_cable'),
+    path('reabastecer_cable/<str:referencia>/', views.reabastecer_cable, name='reabastecer_cable'),
     path('eliminar_cable/<str:referencia>/', views.eliminar_cable, name='eliminar_cable'),
  
     

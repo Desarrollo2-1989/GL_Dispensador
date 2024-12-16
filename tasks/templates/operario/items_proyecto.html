@@ -42,17 +42,17 @@
                         <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" href="#" aria-haspopup="true"
                             aria-expanded="false" title="{% trans 'User Menu' %}">
                             <i class="fas fa-user me-1"></i> <!-- Ícono de usuario -->
-                            <span class="d-none d-sm-inline">{{ request.COOKIES.user_role }}</span>
+                            <span class="d-none d-sm-inline">{{ request.session.user_role }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li>
                                 <span class="dropdown-item text-bold">
-                                    <i class="fas fa-user-circle me-2"></i>{{ request.COOKIES.user_role }}
+                                    <i class="fas fa-user-circle me-2"></i>{{ request.session.user_role }}
                                 </span>
                             </li>
                             <li>
                                 <span class="dropdown-item">
-                                    <i class="fas fa-id-badge me-2"></i>{{ request.COOKIES.user_name }}
+                                    <i class="fas fa-id-badge me-2"></i>{{ request.session.user_name }}
                                 </span>
                             </li>
                             <li>
@@ -132,52 +132,57 @@
                             </table>
                         </div>
                     </div>
-                    <!-- Paginación -->
-                    <div class="mt-4">
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-center">
-                                {% if page_obj.has_previous %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="Primera">
-                                        <span aria-hidden="true">&laquo;&laquo;</span>
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link"
-                                        href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}"
-                                        aria-label="Anterior">
-                                        <span aria-hidden="true">&laquo;</span>
-                                    </a>
-                                </li>
-                                {% endif %}
 
-                                {% for num in page_obj.paginator.page_range %}
-                                {% if page_obj.number == num %}
-                                <li class="page-item active">
-                                    <span class="page-link">{{ num }} <span
-                                            class="visually-hidden">(actual)</span></span>
-                                </li>
-                                {% else %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a>
-                                </li>
+                    <!-- Paginación -->
+                     <div class="mt-4">
+                        <nav aria-label="Page navigation">
+                          <ul class="pagination justify-content-center">
+                            <!-- Botón para ir a la primera página -->
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                              <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="First">
+                                <span aria-hidden="true">&laquo;&laquo;</span>
+                              </a>
+                            </li>
+                            <li class="page-item">
+                              <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}"
+                                aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                              </a>
+                            </li>
+                            {% endif %}
+                  
+                            <!-- Paginación dinámica -->
+                            {% for num in page_obj.paginator.page_range %}
+                            {% if page_obj.number == num %}
+                            <li class="page-item active">
+                              <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
+                            </li>
+                            {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item"><a
+                                class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+                              {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                              <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a>
+                              </li>
+                              {% elif num < page_obj.number|add:'-3' and num == 2 %} <li class="page-item"><span
+                                  class="page-link">...</span></li>
+                                {% elif num > page_obj.number|add:'3' and num == page_obj.paginator.num_pages|add:'-1' %}
+                                <li class="page-item"><span class="page-link">...</span></li>
                                 {% endif %}
                                 {% endfor %}
-
+                  
+                                <!-- Botón para ir a la página siguiente -->
                                 {% if page_obj.has_next %}
                                 <li class="page-item">
-                                    <a class="page-link"
-                                        href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}"
-                                        aria-label="Siguiente">
-                                        <span aria-hidden="true">&raquo;</span>
-                                    </a>
+                                  <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}"
+                                    aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                  </a>
                                 </li>
                                 <li class="page-item">
-                                    <a class="page-link"
-                                        href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}"
-                                        aria-label="Última">
-                                        <span aria-hidden="true">&raquo;&raquo;</span>
-                                    </a>
+                                  <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}"
+                                    aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                  </a>
                                 </li>
                                 {% endif %}
                             </ul>

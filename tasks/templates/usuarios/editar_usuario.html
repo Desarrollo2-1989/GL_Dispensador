@@ -101,14 +101,14 @@
                             <!-- Campo Rol -->
                             <div class="form-group">
                                 <label for="{{ form.rol.id_for_label }}">Rol</label>
-                                {% if request.COOKIES.user_role == 'superadmin' and form.instance.rol == 'superadmin' %}
+                                {% if request.session.user_role == 'superadmin' and form.instance.rol == 'superadmin' %}
                                     <!-- Si el rol actual es superadmin y el rol editado también es superadmin -->
                                     <input type="text" class="form-control" value="{{ form.rol.value|capfirst }}" readonly>
                                 {% else %}
                                     <select class="form-control {% if form.rol.errors %}is-invalid{% endif %}"
                                             id="{{ form.rol.id_for_label }}"
                                             name="rol">
-                                        {% if request.COOKIES.user_role == 'superadmin' %}
+                                        {% if request.session.user_role == 'superadmin' %}
                                             <!-- Superadmin puede seleccionar cualquier rol -->
                                             <option value="admin" {% if form.rol.value == 'admin' %}selected{% endif %}>Administrador</option>
                                             <option value="operario" {% if form.rol.value == 'operario' %}selected{% endif %}>Operario</option>

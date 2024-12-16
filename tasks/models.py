@@ -134,15 +134,15 @@ class DestinatarioCorreo(models.Model):
         return self.correo
     
 class ConfiguracionCable(models.Model):
-    cable = models.ForeignKey(Cables, on_delete=models.CASCADE)
-    esp = models.CharField(max_length=100) 
-    encoder = models.CharField(max_length=100)
+    cable = models.ForeignKey(Cables, on_delete=models.CASCADE)  # Esto significa que cada configuración de cable estará asociada a un cable específico
+    esp = models.CharField(max_length=100)  # Se define como un campo de texto con un máximo de 100 caracteres.
+    encoder = models.CharField(max_length=100) # También se define como un campo de texto con un máximo de 100 caracteres.
 
     class Meta:
         db_table = 'configuracion_cables' 
         unique_together = ('cable', 'esp', 'encoder')  # Asegura que la combinación de cable, esp y encoder sea única
         
     def __str__(self):
-        return f'{self.cable} - ESP: {self.esp}, Encoder: {self.encoder}'
+        return f'{self.cable} - ESP: {self.esp}, Encoder: {self.encoder}'  # Se utiliza para mostrar información sobre la configuración de cable
     
     

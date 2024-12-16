@@ -16,10 +16,12 @@
     <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #002244;">
         <div class="container-fluid">
             <a href="#" class="navbar-brand d-flex align-items-center">
-                <img src="{% static 'admin-lte/dist/img/gl.png' %}" alt="Logo" class="brand-image" style="border-radius: 50%; height: 40px; width: 50px; object-fit: cover;">
+                <img src="{% static 'admin-lte/dist/img/gl.png' %}" alt="Logo" class="brand-image"
+                    style="border-radius: 50%; height: 40px; width: 50px; object-fit: cover;">
                 <span class="brand-text ms-2">INGENIEROS S.A.</span>
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
@@ -31,19 +33,20 @@
                         </a>
                     </li>
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" href="#" aria-haspopup="true" aria-expanded="false" title="{% trans 'User  Menu' %}">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" href="#"
+                            aria-haspopup="true" aria-expanded="false" title="{% trans 'User   Menu' %}">
                             <i class="fas fa-user me-1"></i>
-                            <span class="d-none d-sm-inline">{{ request.COOKIES.user_role }}</span>
+                            <span class="d-none d-sm-inline">{{ request.session.user_role }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end shadow">
                             <li>
                                 <span class="dropdown-item text-bold">
-                                    <i class="fas fa-user-circle me-2"></i>{{ request.COOKIES.user_role }}
+                                    <i class="fas fa-user-circle me-2"></i>{{ request.session.user_role }}
                                 </span>
                             </li>
                             <li>
                                 <span class="dropdown-item">
-                                    <i class="fas fa-id-badge me-2"></i>{{ request.COOKIES.user_name }}
+                                    <i class="fas fa-id-badge me-2"></i>{{ request.session.user_name }}
                                 </span>
                             </li>
                             <li>
@@ -61,12 +64,44 @@
         </div>
     </nav>
 
-    <!-- Mensaje de error -->
-    {% if error_message %}
-    <div class="alert alert-danger" role="alert">
-        {{ error_message }}
+    {% if cables_bajo_stock %}
+    <div class="alert alert-warning mb-1">
+        <strong>Advertencia:</strong> Hay cables cuyo stock está por debajo del mínimo.
+        <ul>
+            {% for cable in cables_bajo_stock %}
+            <li>Referencia: {{ cable.referencia }} - Cantidad Restante: {{ cable.cantidad_restante }}, Stock Mínimo: {{ cable.stock_minimo }}</li>
+            {% endfor %}
+        </ul>
     </div>
     {% endif %}
+    
+    {% if success_message %}
+    <div class="alert alert-success mb-1">
+        {{ success_message }}
+    </div>
+    {% endif %}
+    
+    <!-- Resto de la plantilla -->
+    
+    {% if mensaje_exito %}
+    <div class="alert alert-success mb-1">
+        {{ mensaje_exito }}
+    </div>
+    {% endif %}
+    
+    {% if messages %}
+    <div class="alert alert-info mb-1">
+        {% for message in messages %}
+        <p>{{ message }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    {% if error_message %}
+    <div class="alert alert-danger mb-1">
+        {{ error_message }}
+    </div>
+    {% endif %}    
 
     <!-- Contenido principal -->
     <div class="container mt-4">
@@ -80,7 +115,8 @@
                     <div class="card-header">
                         <h3 class="page-title">Listado de cables</h3>
                         <form method="GET" class="input-group mt-3" style="max-width: 400px;">
-                            <input type="text" name="q" class="form-control" placeholder="Buscar por referencia" value="{{ query|default:'' }}">
+                            <input type="text" name="q" class="form-control" placeholder="Buscar por referencia"
+                                value="{{ query|default:'' }}">
                             <div class="input-group-append">
                                 <button type="submit" class="btn btn-outline-primary">
                                     <i class="fas fa-search"></i> Buscar
@@ -113,12 +149,27 @@
                                             <td>{{ cable.cantidad_restante }}</td>
                                             <td>{{ cable.stock_minimo }}</td>
                                             <td class="text-center">
-                                                <input type="radio" name="cable" value="{{ cable.referencia }}" id="cable{{ cable.referencia }}" class="custom-checkbox">
-                                                <label for="cable{{ cable.referencia }}"></label>
+                                                {% if cable.cantidad_restante > 0 %}
+                                                    <input type="radio" name="cable" value="{{ cable.referencia }}"
+                                                        id="cable{{ cable.referencia }}" class="custom-checkbox">
+                                                    <label for="cable{{ cable.referencia }}"></label>
+                                                {% else %}
+                                                    <span>No disponible</span>
+                                                {% endif %}
                                             </td>
                                             <td class="text-center">
-                                                <input type="checkbox" name="reproceso_{{ cable.referencia }}" id="reproceso_{{ cable.referencia }}" class="custom-checkbox" onclick="toggleReproceso(this)">
-                                                <label for="reproceso_{{ cable.referencia }}">¿Reproceso?</label>
+                                                {% if cable.cantidad_restante > 0 %}
+                                                    {% if cable.referencia in referencias_dispensadas %}
+                                                    <input type="checkbox" name="reproceso_{{ cable.referencia }}"
+                                                        id="reproceso_{{ cable.referencia }}" class="custom-checkbox"
+                                                        onclick="toggleReproceso(this)">
+                                                    <label for="reproceso_{{ cable.referencia }}">¿Reproceso?</label>
+                                                    {% else %}
+                                                    <span>No disponible</span>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <span>No disponible</span>
+                                                {% endif %}
                                             </td>
                                         </tr>
                                         {% empty %}

@@ -1,0 +1,53 @@
+{% extends 'adminlte/base_cables.html' %}
+{% load static %}
+
+{% block title %}
+Reabastecer Cable - {{ block.super }}
+{% endblock %}
+
+{% block content %}
+<div class="content">
+    <div class="container-fluid">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title">Reabastecer Cable: {{ cable.referencia }}</h3>
+                    </div>
+
+                    <!-- Inicio del formulario -->
+                    <form role="form" method="POST">
+                        {% csrf_token %}
+                        <div class="card-body">
+                            <!-- Campo Cantidad a Reabastecer -->
+                            <div class="form-group">
+                                <label for="cantidad_reabastecer">Cantidad a Reabastecer (m):</label>
+                                <input type="number" class="form-control {% if form.cantidad_reabastecer.errors %}is-invalid{% endif %}" id="cantidad_reabastecer" name="cantidad_reabastecer" min="1" max="{{ cantidad_maxima_reabastecer }}" required>
+                                <small class="form-text text-muted">Cantidad actual restante: {{ cable.cantidad_restante }} m. Cantidad inicial: {{ cable.cantidad_inicial }} m.</small>
+                                {% if form.cantidad_reabastecer.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.cantidad_reabastecer.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <!-- /.card-body -->
+
+                        <!-- Pie de la tarjeta con botones -->
+                        <div class="card-footer text-center">
+                            <button type="submit" class="btn btn-success btn-lg">Reabastecer</button>
+                            <a href="{% url 'cables' %}" class="btn btn-secondary btn-lg">Cancelar</a>
+                        </div>
+                    </form>
+                </div>
+                <!-- /.card -->
+            </div>
+            <!-- /.col -->
+        </div>
+        <!-- /. row -->
+    </div><!-- /.container-fluid -->
+</div>
+<!-- /.content -->
+{% endblock %}

@@ -73,9 +73,13 @@ Administrar Cables - {{ block.super }}
                             <a href="{% url 'editar_cable' cable.referencia %}" class="btn btn-info btn-sm btn-accion">
                                 <i class="fas fa-edit"></i> Editar
                             </a>
+                            <a href="{% url 'reabastecer_cable' cable.referencia %}" class="btn btn-success btn-sm btn-accion">
+                                <i></i> Reabastecer
+                            </a>
                             <button class="btn btn-danger btn-sm btn-accion" onclick="confirmarEliminacion('{{ cable.referencia }}')">
                                 <i class="fas fa-trash-alt"></i> Eliminar
                             </button>
+                           
                             <form id="eliminarCableForm_{{ cable.referencia }}" style="display: none;" action="{% url 'eliminar_cable' cable.referencia %}" method="post">
                                 {% csrf_token %}
                             </form>
@@ -101,43 +105,56 @@ Administrar Cables - {{ block.super }}
         <!-- Paginación -->
         <div class="mt-4">
             <nav aria-label="Page navigation">
-                <ul class="pagination justify-content-center">
-                    {% if page_obj.has_previous %}
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="First">
-                            <span aria-hidden="true">&laquo;&laquo;</span>
-                        </a>
-                    </li>
-                    <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}" aria-label="Previous">
-                            <span aria-hidden="true">&laquo;</span>
-                        </a>
-                    </li>
-                    {% endif %}
-
-                    {% for num in page_obj.paginator.page_range %}
-                    {% if page_obj.number == num %}
-                    <li class="page-item active">
-                        <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
-                    </li>
-                    {% else %}
-                    <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+              <ul class="pagination justify-content-center">
+                <!-- Botón para ir a la primera página -->
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                  <a class="page-link" href="?q={{ query|default:'' }}&page=1" aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                  </a>
+                </li>
+                <li class="page-item">
+                  <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.previous_page_number }}"
+                    aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                  </a>
+                </li>
+                {% endif %}
+      
+                <!-- Paginación dinámica -->
+                {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                <li class="page-item active">
+                  <span class="page-link">{{ num }} <span class="sr-only">(current)</span></span>
+                </li>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %} <li class="page-item"><a
+                    class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a></li>
+                  {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                  <li class="page-item"><a class="page-link" href="?q={{ query|default:'' }}&page={{ num }}">{{ num }}</a>
+                  </li>
+                  {% elif num < page_obj.number|add:'-3' and num == 2 %} <li class="page-item"><span
+                      class="page-link">...</span></li>
+                    {% elif num > page_obj.number|add:'3' and num == page_obj.paginator.num_pages|add:'-1' %}
+                    <li class="page-item"><span class="page-link">...</span></li>
                     {% endif %}
                     {% endfor %}
-
+      
+                    <!-- Botón para ir a la página siguiente -->
                     {% if page_obj.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}" aria-label="Next">
-                            <span aria-hidden="true">&raquo;</span>
-                        </a>
+                      <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.next_page_number }}"
+                        aria-label="Next">
+                        <span aria-hidden="true">&raquo;</span>
+                      </a>
                     </li>
                     <li class="page-item">
-                        <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}" aria-label="Last">
-                            <span aria-hidden="true">&raquo;&raquo;</span>
-                        </a>
+                      <a class="page-link" href="?q={{ query|default:'' }}&page={{ page_obj.paginator.num_pages }}"
+                        aria-label="Last">
+                        <span aria-hidden="true">&raquo;&raquo;</span>
+                      </a>
                     </li>
                     {% endif %}
-                </ul>
+              </ul>
             </nav>
         </div>
     </div>

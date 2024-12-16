@@ -37,6 +37,11 @@ from django.db.models import Sum
 # json para manejar datos en formato JSON
 import json
 from django.utils.dateparse import parse_date
+from django.http import JsonResponse
+from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
+from django.core.cache import cache
+
+
 
 def login(request):
     # Verifica si la solicitud es de tipo POST
@@ -69,11 +74,11 @@ def login(request):
                     else:
                         response = redirect('registros')
 
-                    # Guarda la cédula, rol y nombre del usuario en cookies
-                    response.set_cookie('user_cedula', user.cedula)
-                    response.set_cookie('user_role', user.rol)
-                    response.set_cookie('user_name', user.nombre_persona)  # Guarda el nombre de la persona
-
+                    # Guardar el rol y cédula en la sesión
+                    # Redirigir según rol
+                    request.session['user_cedula'] = user.cedula
+                    request.session['user_name'] = user.nombre_persona
+                    request.session['user_role'] = user.rol        
                     return response
                 else:
                     # Muestra un mensaje de error si la contraseña es incorrecta
@@ -89,26 +94,21 @@ def login(request):
     return render(request, 'login.html', {'form': form})
 
 def logout(request):
-    # Crear una respuesta de redirección a la página de login
+    # Redirige a la página de login y elimina la sesión
     response = redirect('login')
-    # Eliminar las cookies de la sesión del usuario
-    response.delete_cookie('user_cedula')  # Elimina la cookie que almacena la cédula del usuario
-    response.delete_cookie('user_role')    # Elimina la cookie que almacena el rol del usuario
-    # Retornar la respuesta con las cookies eliminadas
+    request.session.flush()  # Elimina todas las variables de sesión
     return response
 
 def administrador(request):
     # Verificar si el usuario tiene una sesión válida y un rol de administrador
-    if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'admin':
-        # Si no se encuentra la cédula en cookies o el rol no es 'admin', redirige a la página de login
+    if not request.session.get('user_cedula') or request.session.get('user_role') != 'admin':
         return redirect('login')
-    # Renderizar la página base para el rol de administrador
     return render(request, 'adminlte/base.html')
 
 def superAdmin(request):
     # Verificar si el usuario tiene una sesión válida y un rol de superadministrador
-    if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'superadmin':
-        # Si no se encuentra la cédula en cookies o el rol no es 'superadmin', redirige a la página de login
+    if not  request.session.get('user_cedula') or  request.session.get('user_role') != 'superadmin':
+        # Si no se encuentra la cédula en session o el rol no es 'superadmin', redirige a la página de login
         return redirect('login')
     # Renderizar la página base para el rol de superadministrador
     return render(request, 'adminlte/base.html')
@@ -125,7 +125,7 @@ def crear_usuario(request):
                 usuario.contraseña = make_password(usuario.contraseña)  # Encripta la contraseña antes de guardarla
 
                 # Verifica el rol antes de guardar
-                user_role = request.COOKIES.get('user_role')  # Obtiene el rol del usuario de las cookies
+                user_role = request.session.get('user_role')  # Obtiene el rol del usuario de session
                 if user_role == 'admin' and usuario.rol in ['admin', 'superadmin']:
                     # Si el usuario es un administrador y trata de crear otro admin o superadmin, muestra un mensaje de error
                     messages.error(request, 'No tienes permisos para crear administradores o superadministradores.')
@@ -148,8 +148,8 @@ def crear_usuario(request):
 @verificar_rol('admin', 'superadmin')  # Decorador que verifica que el usuario tenga rol de admin o superadmin
 def editar_usuario(request, cedula):
     usuario = get_object_or_404(Usuarios, cedula=cedula)  # Obtiene el usuario con la cédula especificada o lanza un error 404 si no existe
-    current_user_role = request.COOKIES.get('user_role')  # Obtiene el rol del usuario actual de las cookies
-    current_user_cedula = request.COOKIES.get('user_cedula')  # Obtiene la cédula del usuario actual de las cookies
+    current_user_role = request.session.get('user_role')  # Obtiene el rol del usuario actual de session
+    current_user_cedula = request.session.get('user_cedula')  # Obtiene la cédula del usuario actual de las session
 
     # Verifica si el usuario actual es admin intentando editar a otro admin o superadmin
     if current_user_role == 'admin' and (usuario.rol == 'superadmin' or usuario.rol == 'admin'):
@@ -189,11 +189,11 @@ def editar_usuario(request, cedula):
                 usuario.save()  # Guarda el usuario en la base de datos
                 messages.success(request, 'Usuario actualizado exitosamente')  # Muestra mensaje de éxito
 
-                # Actualiza las cookies si el usuario editado es el usuario autenticado actual
+                # Actualiza session si el usuario editado es el usuario autenticado actual
                 if current_user_cedula == usuario.cedula:
                     response = redirect('administrar_usuarios')
-                    response.set_cookie('user_role', usuario.rol)  # Actualiza el rol en la cookie
-                    response.set_cookie('user_name', usuario.nombre_persona)  # Actualiza el nombre en la cookie
+                    request.session('user_role', usuario.rol)  # Actualiza el rol en la session
+                    request.session('user_name', usuario.nombre_persona)  # Actualiza el nombre en la session
                     return response
 
                 return redirect('administrar_usuarios')  # Redirige a la vista de administración de usuarios
@@ -208,7 +208,7 @@ def editar_usuario(request, cedula):
 @verificar_rol('admin', 'superadmin')  # Decorador que verifica que el usuario tenga rol de admin o superadmin
 def eliminar_usuario(request, cedula):
     usuario = get_object_or_404(Usuarios, cedula=cedula)  # Obtiene el usuario a eliminar o muestra un error 404 si no existe
-    user_role = request.COOKIES.get('user_role')  # Obtiene el rol del usuario autenticado desde las cookies
+    user_role = request.session.get('user_role')  # Obtiene el rol del usuario autenticado desde session
 
     # Verifica si el usuario a eliminar es el superadministrador
     if usuario.rol == 'superadmin':
@@ -236,7 +236,7 @@ def eliminar_usuario(request, cedula):
 @verificar_rol('admin', 'superadmin')  # Decorador para verificar que el usuario tiene rol de admin o superadmin
 def administrar_usuarios(request):
     query = request.GET.get('q')  # Obtiene el valor de búsqueda desde los parámetros GET
-    user_role = request.COOKIES.get('user_role')  # Obtiene el rol del usuario autenticado desde las cookies
+    user_role = request.session.get('user_role')  # Obtiene el rol del usuario autenticado desde las session
     
     # Realiza la búsqueda de usuarios según la consulta de búsqueda y el rol del usuario
     if query:
@@ -266,6 +266,13 @@ def administrar_usuarios(request):
     paginator = Paginator(usuarios, 5)  # Configura la paginación para mostrar 5 usuarios por página
     page_number = request.GET.get('page')  # Obtiene el número de página actual desde los parámetros GET
     page_obj = paginator.get_page(page_number)  # Obtiene los usuarios de la página actual
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     context = {
         'page_obj': page_obj,  # Objeto de la página actual para el template
@@ -340,6 +347,13 @@ def manejo_proyectos(request):
     paginator = Paginator(proyectos, 5)  # Pagina los proyectos con 5 por página
     page_number = request.GET.get('page')  # Obtener el número de página de la solicitud
     page_obj = paginator.get_page(page_number)  # Obtiene los proyectos paginados
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     context = {
         'page_obj': page_obj,
@@ -415,6 +429,13 @@ def tableros(request):
     paginator = Paginator(tableros, 5)  # Muestra 5 tableros por página
     page_number = request.GET.get('page')  # Obtiene el número de página desde los parámetros GET
     page_obj = paginator.get_page(page_number)  # Obtiene el objeto de página correspondiente
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     context = {
         'page_obj': page_obj,  # Objeto de página para la paginación
@@ -508,24 +529,49 @@ def crear_cable(request):
 
 @verificar_rol('admin', 'superadmin')  # Decorador para verificar los permisos de rol
 def editar_cable(request, referencia):
-    setear_cable = get_object_or_404(Cables, referencia=referencia)  # Obtener el cable por referencia o devolver 404 si no existe
+    cable = get_object_or_404(Cables, referencia=referencia)  # Obtener el cable por referencia o devolver 404 si no existe
     
     if request.method == 'POST':  # Verifica si la solicitud es POST
-        form = CableForm(request.POST, instance=setear_cable)  # Crea una instancia del formulario con los datos recibidos
+        form = CableForm(request.POST, instance=cable)  # Crea una instancia del formulario con los datos recibidos
         if form.is_valid():  # Verifica si el formulario es válido
             try:
-                # Actualizar el cable y mantener cantidad_restante igual a cantidad_inicial
-                setear_cable = form.save(commit=False)  # No guarda aún en la base de datos
-                setear_cable.cantidad_restante = setear_cable.cantidad_inicial  # Asigna cantidad_restante
-                setear_cable.save()  # Guarda el cable en la base de datos
+                # Actualizar el cable sin modificar la cantidad restante
+                cable = form.save(commit=False)  # No guarda aún en la base de datos
+                cable.cantidad_restante = Cables.objects.get(referencia=referencia).cantidad_restante  # Mantener la cantidad restante actual
+                cable.save()  # Guarda el cable en la base de datos
                 messages.success(request, 'Cable actualizado exitosamente.')  # Mensaje de éxito
                 return redirect('cables')  # Redirige a la lista de cables
             except IntegrityError:
                 messages.error(request, 'Error al actualizar el cable. Verifica si el cable ya existe.')  # Mensaje de error si hay un problema
     else:
-        form = CableForm(instance=setear_cable)  # Si no es una solicitud POST, crea un formulario con los datos del cable existente
+        form = CableForm(instance=cable)  # Si no es una solicitud POST, crea un formulario con los datos del cable existente
     
     return render(request, 'cables/editar_cable.html', {'form': form})  # Renderiza la plantilla para editar el cable
+
+
+@verificar_rol('admin', 'superadmin')  # Decorador para verificar los permisos de rol
+def reabastecer_cable(request, referencia):
+    cable = get_object_or_404(Cables, referencia=referencia)  # Obtener el cable por referencia
+
+    # La cantidad máxima que se puede reabastecer es la cantidad inicial
+    cantidad_maxima_reabastecer = cable.cantidad_inicial
+
+    if request.method == 'POST':
+        cantidad_reabastecer = int(request.POST.get('cantidad_reabastecer', 0))
+        
+        # Verificar que la cantidad a reabastecer no supere la cantidad inicial
+        if cantidad_reabastecer <= cantidad_maxima_reabastecer:
+            cable.cantidad_restante = cantidad_reabastecer  # Actualizar la cantidad restante
+            cable.save()  # Guardar los cambios
+            messages.success(request, 'Cable reabastecido exitosamente.')  # Mensaje de éxito
+            return redirect('cables')  # Redirigir a la lista de cables
+        else:
+            messages.error(request, 'La cantidad a reabastecer no puede superar la cantidad inicial.')  # Mensaje de error
+
+    return render(request, 'cables/reabastecer_cable.html', {
+        'cable': cable,
+        'cantidad_maxima_reabastecer': cantidad_maxima_reabastecer  # Pasar la cantidad máxima al contexto
+    })  # Renderizar la plantilla de reabastecimiento
 
 @verificar_rol('admin', 'superadmin')  # Decorador para verificar los permisos de rol
 def eliminar_cable(request, referencia):
@@ -562,6 +608,13 @@ def cables(request):
     paginator = Paginator(setear_cables, 5)  # Paginador para 5 cables por página
     page_number = request.GET.get('page', 1)  # Obtener el número de página actual
     page_obj = paginator.get_page(page_number)  # Obtener los objetos de la página actual
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     context = {
         'page_obj': page_obj,  # Paginación de cables
@@ -651,13 +704,95 @@ def lista_destinatarios(request):
     
     paginator = Paginator(destinatarios, 5)  # Pagina los destinatarios con 5 por página
     page_number = request.GET.get('page')  # Obtener el número de página del GET
-    page_obj = paginator.get_page(page_number)  # Obtener la página correspondiente
+
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     context = {
         'page_obj': page_obj,  # Pasar la página de destinatarios al contexto
         'query': query,  # Mantener la consulta de búsqueda en el contexto
     }
-    return render(request, 'destinatarios/lista_destinatarios.html', context)  # Renderizar la plantilla con el contexto
+    return render(request, 'destinatarios/lista_destinatarios.html', context) # Renderizar la plantilla con el contexto
+
+#Crud configurar cable, esp y encoder
+@verificar_rol('admin', 'superadmin') 
+def crear_configuracion_cable(request):
+    if request.method == 'POST':
+        form = ConfiguracionCableForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()  # Guarda la configuración en la base de datos
+                messages.success(request, 'Configuración de cable creada exitosamente.')  # Mensaje de éxito
+                return redirect('listar_configuraciones_cable')  # Redirige a la lista de configuraciones después de guardar
+            except IntegrityError:  # Captura errores de integridad (por ejemplo, duplicados)
+                messages.error(request, 'Error al guardar la configuración. Verifica los datos ingresados.')  # Mensaje de error
+    else:
+        form = ConfiguracionCableForm()  # Crea un formulario vacío si no es una solicitud POST
+
+    return render(request, 'configuracion/crear_configuracion_cable.html', {'form': form})
+
+@verificar_rol('admin', 'superadmin')
+def editar_configuracion_cable(request, id):
+    configuracion = get_object_or_404(ConfiguracionCable, id=id)
+
+    if request.method == 'POST':
+        form = ConfiguracionCableForm(request.POST, instance=configuracion)
+        if form.is_valid():
+            try:
+                form.save()  # Guarda la configuración
+                messages.success(request, 'Configuración de cable actualizada exitosamente.')
+                return redirect('listar_configuraciones_cable')
+            except IntegrityError:
+                messages.error(request, 'Error al actualizar la configuración. Verifica los datos ingresados.')
+    else:
+        form = ConfiguracionCableForm(instance=configuracion)  # Carga la instancia existente
+
+    return render(request, 'configuracion/editar_configuracion_cable.html', {'form': form})
+
+@verificar_rol('admin', 'superadmin') 
+def eliminar_configuracion_cable(request, id):
+    configuracion = get_object_or_404(ConfiguracionCable, id=id)
+    if request.method == 'POST':
+        configuracion.delete()
+        messages.success(request, 'configuración de cable ha sido eliminado correctamente.')  # Mensaje de éxito
+        return redirect('listar_configuraciones_cable')
+    
+    return render(request, 'configuracion/eliminar_configuracion_cable.html', {'configuracion': configuracion})
+
+@verificar_rol('admin', 'superadmin') 
+def listar_configuraciones_cable(request):
+    query = request.GET.get('q')  # Obtener la consulta de búsqueda
+    if query:
+        # Filtra las configuraciones basadas en la consulta
+        configuraciones = ConfiguracionCable.objects.filter(
+            Q(cable__referencia__icontains=query) |
+            Q(esp__icontains=query) |
+            Q(encoder__icontains=query)
+        ).order_by('cable__referencia')  # Ordena por la descripción del cable
+    else:
+        # Obtiene todas las configuraciones y las ordena
+        configuraciones = ConfiguracionCable.objects.all().order_by('cable__referencia')
+
+    paginator = Paginator(configuraciones, 5)  # Pagina las configuraciones con 5 por página
+    page_number = request.GET.get('page')  # Obtener el número de página de la solicitud
+    page_obj = paginator.get_page(page_number)  # Obtiene las configuraciones paginadas
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
+
+    context = {
+        'page_obj': page_obj,
+        'query': query,  # Mantiene la consulta de búsqueda en el contexto
+    }
+    return render(request, 'configuracion/listar_configuraciones_cable.html', context)
 
 #Operario
 def on_connect(client, userdata, flags, rc):
@@ -721,6 +856,7 @@ def on_message(client, userdata, msg):
                             cable.save()
 
                         print(f"Stock del cable {cable_referencia} actualizado. Nueva cantidad restante: {cable.cantidad_restante}")
+                        
                     else:
                         print(f"Error: No hay suficiente cable para dispensar {cantidad_dispensada}.")
                     
@@ -757,7 +893,7 @@ cliente.loop_start()
 # Vista para operario
 def operario(request):
     # Verificar si el usuario tiene una cédula y si su rol es 'operario'
-    if not request.COOKIES.get('user_cedula') or request.COOKIES.get('user_role') != 'operario':
+    if not request.session.get('user_cedula') or request.session.get('user_role') != 'operario':
         # Si no está autenticado como operario, redirigir a la página de inicio de sesión
         return redirect('login')
 
@@ -778,6 +914,13 @@ def operario(request):
     paginator = Paginator(proyectos, 5)
     page_number = request.GET.get('page')  # Obtener el número de página de la solicitud GET
     page_obj = paginator.get_page(page_number)  # Obtener la página correspondiente de proyectos
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     # Preparar el contexto para la plantilla
     context = {
@@ -802,7 +945,7 @@ def ver_items_proyecto(request, proyecto_id):
 
     if query:
         # Si hay una consulta de búsqueda, filtrar los tableros por identificador que contenga la consulta
-        tableros = tableros.filter(identificador__icontains=query)
+        tableros = tableros.filter(identificador=query)
 
     # Ordenar los tableros por identificador
     tableros = tableros.order_by('identificador')
@@ -811,6 +954,13 @@ def ver_items_proyecto(request, proyecto_id):
     paginator = Paginator(tableros, 5)
     page_number = request.GET.get('page')  # Obtener el número de página de la solicitud GET
     page_obj = paginator.get_page(page_number)  # Obtener la página correspondiente de tableros
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     # Preparar el contexto para la plantilla
     context = {
@@ -823,36 +973,71 @@ def ver_items_proyecto(request, proyecto_id):
     return render(request, 'operario/items_proyecto.html', context)
 
 # Vista para ver los cables de un tablero
-@verificar_rol('operario') # Decorador para verificar los permisos de rol
+@verificar_rol('operario')  # Decorador para verificar los permisos de rol
 def ver_cables_tablero(request, tablero_id):
-    tablero = get_object_or_404(Tableros, identificador=tablero_id)
-    proyecto = tablero.proyecto
-    cables = Cables.objects.all()
+    tablero = get_object_or_404(Tableros, identificador=tablero_id)  # Obtener el objeto Tableros por su identificador
+    proyecto = tablero.proyecto  # Obtener el proyecto asociado al tablero
+    cables = Cables.objects.all()  # Inicializa una consulta para obtener todos los cables
     query = request.GET.get('q')
 
     if query:
-        cables = cables.filter(referencia__icontains=query)
+        cables = cables.filter(referencia__icontains=query)  # Filtrar cables que contienen la consulta
 
+    # Obtener las referencias de cables dispensados en el contexto del proyecto y tablero
+    referencias_dispensadas = RegistroDispensa.objects.filter(
+        tablero=tablero,
+        proyecto=proyecto
+    ).values_list('cable__referencia', flat=True).distinct()
+
+    # Identificar cables con stock bajo
+    cables_bajo_stock = [cable for cable in cables if cable.verificar_stock_minimo()]  # Filtrar cables con stock bajo
+
+    # Crea una lista para almacenar información sobre los cables
+    cables_info = []
+    for cable in cables:
+        cables_info.append({
+            'cable': cable,
+            'dispensado': cable.referencia in referencias_dispensadas,  # Verifica si la referencia del cable está en las dispensadas
+        })
+
+    # Si la solicitud es POST, significa que el operario está tratando de dispensar un cable
     if request.method == 'POST':
         # Verificar si ya hay una solicitud en proceso
         if cliente.user_data_get().get('solicitud_en_proceso'):
             error_message = "Ya se ha enviado una solicitud. Espera la respuesta."
+            messages.error(request, error_message)  # Mensaje de error
             return render(request, 'operario/vista_espera.html', {
-                'error_message': error_message,
                 'tablero_id': tablero_id,
             })
 
+        # Obtiene la referencia del cable seleccionado por el operario
         cable_referencia = request.POST.get('cable')
 
+        # Si hay una referencia de cable seleccionada
         if cable_referencia:
             try:
-                cable = Cables.objects.get(referencia=cable_referencia)
-                config = ConfiguracionCable.objects.get(cable=cable)
+                cable = Cables.objects.get(referencia=cable_referencia)  # Intenta obtener el cable con la referencia proporcionada
+                
+                # Verificar si la cantidad restante es cero
+                if cable.cantidad_restante == 0:
+                    messages.error(request, "No se puede dispensar el cable porque su cantidad restante es cero.")
+                    return render(request, 'operario/ver_cables.html', {
+                        'tablero': tablero,
+                        'cables': cables,
+                        'proyecto_id': proyecto.proyecto,
+                        'query': query,
+                        'cables_bajo_stock': cables_bajo_stock,
+                    })
+
+                config = ConfiguracionCable.objects.get(cable=cable)  # Obtiene la configuración asociada al cable
+                
+                # Obtiene la configuración de ESP y encoder desde la configuración
                 esp_seleccionado = config.esp
                 encoder_seleccionado = config.encoder
                 mensaje_solicitud = f"{esp_seleccionado},{encoder_seleccionado},3"
 
-                user_cedula = request.COOKIES.get('user_cedula')
+                # Obtiene el usuario autenticado a través de la cédula guardada en la sesión
+                user_cedula = request.session.get('user_cedula')
                 user = Usuarios.objects.get(cedula=user_cedula)
 
                 # Captura el valor del checkbox de reproceso
@@ -861,40 +1046,58 @@ def ver_cables_tablero(request, tablero_id):
                 # Establecer la solicitud en proceso
                 cliente.user_data_set({
                     'cable_referencia': cable_referencia,
-                    'solicitud_en_proceso': True,
-                    'tablero': tablero,
-                    'usuario': user,
+                    'solicitud_en_proceso': True,  # Marca que hay una solicitud en proceso
+                    'tablero': tablero,  # Asocia el tablero seleccionado
+                    'usuario': user,  # Asocia el usuario que hace la solicitud
                     'reproceso': reproceso  # Guardamos el valor del reproceso
                 })
-                cliente.publish("Prueba-DP_GL", mensaje_solicitud)
+                cliente.publish("Prueba-DP_GL", mensaje_solicitud)  # Public a el mensaje en el tópico MQTT
                 print(f"Solicitud enviada: {mensaje_solicitud}")
 
+                # Redirige a la vista de espera para que el operario espere la respuesta
                 return redirect('vista_espera', tablero_id=tablero_id)
 
-            except ConfiguracionCable.DoesNotExist:
-                error_message = "No hay configuración disponible para este cable."
+            except Cables.DoesNotExist:
+                error_message = "El cable seleccionado no existe."
+                messages.error(request, error_message)  # Muestra mensaje de error si no se encuentra el cable
                 return render(request, 'operario/ver_cables.html', {
                     'tablero': tablero,
                     'cables': cables,
                     'proyecto_id': proyecto.proyecto,
                     'query': query,
-                    'error_message': error_message,
+                    'cables_bajo_stock': cables_bajo_stock,
+                })
+            except ConfiguracionCable.DoesNotExist:
+                error_message = "No hay configuración disponible para este cable."
+                messages.error(request, error_message)  # Mensaje de error
+                return render(request, 'operario/ver_cables.html', {
+                    'tablero': tablero,
+                    'cables': cables,
+                    'proyecto_id': proyecto.proyecto,
+                    'query': query,
+                    'cables_bajo_stock': cables_bajo_stock,
                 })
         else:
             error_message = "Por favor, selecciona un cable antes de proceder."
+            messages.error(request, error_message)  # Mensaje de error
             return render(request, 'operario/ver_cables.html', {
                 'tablero': tablero,
                 'cables': cables,
                 'proyecto_id': proyecto.proyecto,
                 'query': query,
-                'error_message': error_message,
+                'cables_bajo_stock': cables_bajo_stock,
+                'referencias_dispensadas': referencias_dispensadas,
             })
 
+    # Renderiza la vista de cables con la información y datos actuales
     return render(request, 'operario/ver_cables.html', {
         'tablero': tablero,
+        'cables_info': cables_info,  # Pasa la información sobre cables y su estado de dispensado
         'cables': cables,
         'proyecto_id': proyecto.proyecto,
         'query': query,
+        'referencias_dispensadas': referencias_dispensadas,  # Pasa las referencias de cables que ya han sido dispensadas
+        'cables_bajo_stock': cables_bajo_stock,  # Pasar los cables con stock bajo al contexto
     })
 
 # Función para iniciar el cliente MQTT
@@ -906,8 +1109,8 @@ def iniciar_mqtt(request):
 @verificar_rol('auditor') # Decorador para verificar los permisos de rol
 def auditor(request):
     # Verificar si el usuario tiene una sesión válida y un rol de auditor
-    user_cedula = request.COOKIES.get('user_cedula')  # Obtener la cédula del usuario de las cookies
-    user_role = request.COOKIES.get('user_role')      # Obtener el rol del usuario de las cookies
+    user_cedula = request.session.get('user_cedula')  # Obtener la cédula del usuario de las sesion
+    user_role = request.session.get('user_role')      # Obtener el rol del usuario de session
 
     # Redirigir al login si la cédula no existe o el rol no es auditor
     if not user_cedula or user_role != 'auditor':
@@ -951,6 +1154,17 @@ def registros(request):
     elif filtro_principal == 'proyecto' and not filtro_secundario:
         # Si se selecciona 'proyecto' sin un proyecto específico, mostrar todos los proyectos
         registros = registros.values('proyecto__proyecto').distinct()
+        
+    paginator = Paginator(registros, 10)  # Mostrar 10 registros por página
+    page_number = request.GET.get('page')  # Obtener el número de página desde la URL
+    page_obj = paginator.get_page(page_number)
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     # Calcular el total de cables dispensados filtrado por operario si corresponde
     total_cables_dispensados = []  # Inicializar la lista para el total de cables dispensados
@@ -977,6 +1191,7 @@ def registros(request):
         'filtro_principal': filtro_principal,  # Filtro principal seleccionado
         'filtro_secundario': filtro_secundario,  # Filtro secundario seleccionado
         'opciones_secundarias': opciones_secundarias,  # Opciones para el filtro secundario
+        'page_obj': page_obj,  # Paginación
         'registros': registros,  # Registros filtrados para mostrar en la plantilla
         'total_cables_dispensados': total_cables_dispensados,  # Total de cables dispensados
     }
@@ -1105,9 +1320,16 @@ def registros_detallados(request):
     registros = RegistroDispensa.objects.filter(filtros).order_by('fecha')
 
     # Configurar la paginación
-    paginator = Paginator(registros, 20)
+    paginator = Paginator(registros, 10)
     page_number = request.GET.get('page', 1)
     page_obj = paginator.get_page(page_number)
+    
+    try:
+        page_obj = paginator.page(page_number)  # Obtener la página correspondiente
+    except PageNotAnInteger:
+        page_obj = paginator.page(1)  # Si page no es un entero, muestra la primera página
+    except EmptyPage:
+        page_obj = paginator.page(paginator.num_pages)  # Si page está fuera de los límites, muestra la última página
 
     context = {
         'page_obj': page_obj,
@@ -1119,94 +1341,31 @@ def registros_detallados(request):
         'operarios': operarios,
         'tableros': tableros,
         'proyectos': proyectos,  # Pasar los proyectos disponibles al contexto
+        'query_params': request.GET.urlencode(),
     }
     return render(request, 'auditor/registros_detallados.html', context) # Renderiza la plantilla con el contexto
 
-#Crud configurar cable, esp y encoder
-@verificar_rol('admin', 'superadmin') 
-def crear_configuracion_cable(request):
-    if request.method == 'POST':
-        form = ConfiguracionCableForm(request.POST)
-        if form.is_valid():
-            try:
-                form.save()  # Guarda la configuración en la base de datos
-                messages.success(request, 'Configuración de cable creada exitosamente.')  # Mensaje de éxito
-                return redirect('listar_configuraciones_cable')  # Redirige a la lista de configuraciones después de guardar
-            except IntegrityError:  # Captura errores de integridad (por ejemplo, duplicados)
-                messages.error(request, 'Error al guardar la configuración. Verifica los datos ingresados.')  # Mensaje de error
-    else:
-        form = ConfiguracionCableForm()  # Crea un formulario vacío si no es una solicitud POST
-
-    return render(request, 'configuracion/crear_configuracion_cable.html', {'form': form})
-
-@verificar_rol('admin', 'superadmin') 
-def editar_configuracion_cable(request, id):
-    configuracion = get_object_or_404(ConfiguracionCable, id=id)
-
-    if request.method == 'POST':
-        form = ConfiguracionCableForm(request.POST, instance=configuracion)
-        if form.is_valid():
-            try:
-                form.save()  # Guarda la configuración
-                messages.success(request, 'Configuración de cable actualizada exitosamente.')
-                return redirect('listar_configuraciones_cable')
-            except IntegrityError:
-                messages.error(request, 'Error al actualizar la configuración. Verifica los datos ingresados.')
-    else:
-        form = ConfiguracionCableForm(instance=configuracion)  # Carga la instancia existente
-
-    return render(request, 'configuracion/editar_configuracion_cable.html', {'form': form})
-
-@verificar_rol('admin', 'superadmin') 
-def eliminar_configuracion_cable(request, id):
-    configuracion = get_object_or_404(ConfiguracionCable, id=id)
-    if request.method == 'POST':
-        configuracion.delete()
-        messages.success(request, 'configuración de cable ha sido eliminado correctamente.')  # Mensaje de éxito
-        return redirect('listar_configuraciones_cable')
-    
-    return render(request, 'configuracion/eliminar_configuracion_cable.html', {'configuracion': configuracion})
-
-@verificar_rol('admin', 'superadmin') 
-def listar_configuraciones_cable(request):
-    query = request.GET.get('q')  # Obtener la consulta de búsqueda
-    if query:
-        # Filtra las configuraciones basadas en la consulta
-        configuraciones = ConfiguracionCable.objects.filter(
-            Q(cable__referencia__icontains=query) |
-            Q(esp__icontains=query) |
-            Q(encoder__icontains=query)
-        ).order_by('cable__referencia')  # Ordena por la descripción del cable
-    else:
-        # Obtiene todas las configuraciones y las ordena
-        configuraciones = ConfiguracionCable.objects.all().order_by('cable__referencia')
-
-    paginator = Paginator(configuraciones, 5)  # Pagina las configuraciones con 5 por página
-    page_number = request.GET.get('page')  # Obtener el número de página de la solicitud
-    page_obj = paginator.get_page(page_number)  # Obtiene las configuraciones paginadas
-
-    context = {
-        'page_obj': page_obj,
-        'query': query,  # Mantiene la consulta de búsqueda en el contexto
-    }
-    return render(request, 'configuracion/listar_configuraciones_cable.html', context)
-
 @verificar_rol('operario')
 def vista_espera(request, tablero_id):
-    # Verificar si hay una solicitud en proceso
     if request.method == 'POST':
-        # Verificar si hay una solicitud en proceso
-        if cliente.user_data_get().get('solicitud_en_proceso'):
-            # Si hay una solicitud en proceso, mostrar el mensaje y no permitir finalizar
-            error_message = "Ya se ha enviado una solicitud. Espera la respuesta."
-            return render(request, 'operario/vista_espera.html', {
-                'error_message': error_message,
-                'tablero_id': tablero_id,  # Asegurarse de pasar tablero_id aquí
-            })
-        else:
-            # Finalizar la solicitud y redirigir a la vista de cables del tablero
+        if 'cancelar' in request.POST:
+            # Restablecer el estado de la solicitud
             cliente.user_data_set({'solicitud_en_proceso': False})
+            messages.success(request, "La dispensación ha sido cancelada con éxito.")
             return redirect('ver_cables_tablero', tablero_id=tablero_id)
 
-    # Renderizar la página de espera si es un GET
+        # Verificar si ya hay una solicitud en proceso
+        if cliente.user_data_get().get('solicitud_en_proceso'):
+            messages.error(request, "Ya se ha enviado una solicitud. Espera la respuesta.")
+            return render(request, 'operario/vista_espera.html', {'tablero_id': tablero_id})
+
+        # Si no hay solicitud en proceso, se puede proceder a establecer una nueva
+        cliente.user_data_set({'solicitud_en_proceso': False})
+        return redirect('ver_cables_tablero', tablero_id=tablero_id)
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        solicitud_en_proceso = cliente.user_data_get().get('solicitud_en_proceso')
+        return JsonResponse({'solicitud_en_proceso': solicitud_en_proceso})
+
     return render(request, 'operario/vista_espera.html', {'tablero_id': tablero_id})
+

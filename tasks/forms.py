@@ -54,9 +54,9 @@ class UsuarioForm(forms.ModelForm):
             )
 
         if self.request:  # Si hay una solicitud
-            user_role = self.request.COOKIES.get(
+            user_role = self.request.session.get(
                 "user_role"
-            )  # Obtiene el rol del usuario de las cookies
+            )  # Obtiene el rol del usuario de las sesion
 
             if user_role == "admin":  # Si el rol del usuario es 'admin'
                 self.fields["rol"].choices = [  # Define opciones de rol limitadas
@@ -126,7 +126,7 @@ class UsuarioForm(forms.ModelForm):
     def clean_rol(self):  # Método para validar el campo 'rol'
         rol = self.cleaned_data.get("rol")  # Obtiene el rol limpiado
         if self.request:  # Si hay una solicitud
-            user_role = self.request.COOKIES.get(
+            user_role = self.request.session.get(
                 "user_role"
             )  # Obtiene el rol del usuario
             if user_role == "admin" and rol in [
