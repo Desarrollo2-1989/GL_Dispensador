@@ -89,18 +89,16 @@
                     </div>
                 {% endif %}
                 {% if messages %}
-<ul class="messages">
-    {% for message in messages %}
-        <li class="{{ message.tags }}">{{ message }}</li>
-    {% endfor %}
-</ul>
-{% endif %}
+                    <ul class="messages">
+                        {% for message in messages %}
+                            <li class="{{ message.tags }}">{{ message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% endif %}
 
                 <form method="POST">
                     {% csrf_token %}
                     <button type="submit" name="cancelar" class="btn btn-danger">Cancelar Dispensación</button>
-                </form>
-
                 </form>
             </div>
         </div>
@@ -108,25 +106,28 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/js/all.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script>
-    $(document).ready(function() {
-        function checkRequestStatus() {
-            $.ajax({
-                url: "{% url 'vista_espera' tablero_id=tablero_id %}",
-                method: "GET",
-                dataType: "json",
-                success: function(response) {
-                    if (!response.solicitud_en_proceso) {
-                        // Si el proceso ya terminó, redirigir automáticamente
-                        window.location.href = "{% url 'ver_cables_tablero' tablero_id=tablero_id %}";
+    <script>
+        $(document).ready(function() {
+            function checkRequestStatus() {
+                $.ajax({
+                    url: "{% url 'vista_espera' tablero_id=tablero_id %}",  // URL de la vista AJAX
+                    method: "GET",
+                    dataType: "json",
+                    success: function(response) {
+                        if (!response.solicitud_en_proceso) {
+                            // Redirigir automáticamente si el proceso termina
+                            window.location.href = "{% url 'ver_cables_tablero' tablero_id=tablero_id %}";
+                        }
+                    },
+                    error: function() {
+                        console.error("Error al verificar el estado del proceso.");
                     }
-                }
-            });
-        }
+                });
+            }
 
-        // Verificar cada 5 segundos el estado de la solicitud en proceso
-        setInterval(checkRequestStatus, 5000);
-    });
-</script>
+            // Verificar cada 5 segundos
+            setInterval(checkRequestStatus, 5000);
+        });
+    </script>
 </body>
 </html>

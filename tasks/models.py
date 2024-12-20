@@ -1,5 +1,6 @@
 from django.db import models  # Importa la clase models para definir los modelos de la base de datos
 from django.utils import timezone  # Importa timezone para trabajar con fechas y horas de manera eficiente
+from django.contrib.auth.models import User
 
 # Modelo para representar usuarios en el sistema
 class Usuarios(models.Model):
@@ -145,4 +146,9 @@ class ConfiguracionCable(models.Model):
     def __str__(self):
         return f'{self.cable} - ESP: {self.esp}, Encoder: {self.encoder}'  # Se utiliza para mostrar información sobre la configuración de cable
     
-    
+
+class Cola(models.Model):
+    usuario = models.ForeignKey(Usuarios, on_delete=models.CASCADE)
+    tablero = models.ForeignKey(Tableros, on_delete=models.CASCADE)
+    en_proceso = models.BooleanField(default=False)  # Indica si el usuario está dispensando actualmente
+    fecha_creacion = models.DateTimeField(auto_now_add=True)

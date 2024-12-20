@@ -13,7 +13,7 @@ from django.core.paginator import Paginator
 # Q se utiliza para realizar consultas más complejas en la base de datos
 from django.db.models import Q
 # Importación de modelos propios de la aplicación
-from .models import Usuarios, Proyectos, Tableros, Cables, MensajePruebaDP, RegistroDispensa, DestinatarioCorreo, ConfiguracionCable
+from .models import Usuarios, Proyectos, Tableros, Cables, MensajePruebaDP, RegistroDispensa, DestinatarioCorreo, ConfiguracionCable, Cola
 # Importación de formularios propios de la aplicación
 from .forms import LoginForm, UsuarioForm, ProyectoForm, TablerosForm, CableForm, DestinatarioCorreoForm, ConfiguracionCableForm
 # IntegrityError para manejar errores de integridad de la base de datos
@@ -99,12 +99,6 @@ def logout(request):
     request.session.flush()  # Elimina todas las variables de sesión
     return response
 
-def administrador(request):
-    # Verificar si el usuario tiene una sesión válida y un rol de administrador
-    if not request.session.get('user_cedula') or request.session.get('user_role') != 'admin':
-        return redirect('login')
-    return render(request, 'adminlte/base.html')
-
 def superAdmin(request):
     # Verificar si el usuario tiene una sesión válida y un rol de superadministrador
     if not  request.session.get('user_cedula') or  request.session.get('user_role') != 'superadmin':
@@ -112,6 +106,13 @@ def superAdmin(request):
         return redirect('login')
     # Renderizar la página base para el rol de superadministrador
     return render(request, 'adminlte/base.html')
+
+def administrador(request):
+    # Verificar si el usuario tiene una sesión válida y un rol de administrador
+    if not request.session.get('user_cedula') or request.session.get('user_role') != 'admin':
+        return redirect('login')
+    return render(request, 'adminlte/base.html')
+
 
 # CRUD PARA CREAR USUARIO  
 @verificar_rol('admin', 'superadmin')  # Verifica que el rol del usuario tenga permisos de acceso
@@ -1002,6 +1003,7 @@ def ver_cables_tablero(request, tablero_id):
 
     # Si la solicitud es POST, significa que el operario está tratando de dispensar un cable
     if request.method == 'POST':
+        
         # Verificar si ya hay una solicitud en proceso
         if cliente.user_data_get().get('solicitud_en_proceso'):
             error_message = "Ya se ha enviado una solicitud. Espera la respuesta."
@@ -1349,23 +1351,21 @@ def registros_detallados(request):
 def vista_espera(request, tablero_id):
     if request.method == 'POST':
         if 'cancelar' in request.POST:
-            # Restablecer el estado de la solicitud
+            # Cancelar solicitud actual
             cliente.user_data_set({'solicitud_en_proceso': False})
             messages.success(request, "La dispensación ha sido cancelada con éxito.")
             return redirect('ver_cables_tablero', tablero_id=tablero_id)
 
-        # Verificar si ya hay una solicitud en proceso
-        if cliente.user_data_get().get('solicitud_en_proceso'):
-            messages.error(request, "Ya se ha enviado una solicitud. Espera la respuesta.")
-            return render(request, 'operario/vista_espera.html', {'tablero_id': tablero_id})
+        # Verificar si el usuario está en proceso de dispensar
+        solicitud_en_proceso = cliente.user_data_get().get('solicitud_en_proceso')
+        if not solicitud_en_proceso:
+            # Finalizar dispensación y pasar al siguiente en cola
+           
+            return redirect('operario/vista_espera')
 
-        # Si no hay solicitud en proceso, se puede proceder a establecer una nueva
-        cliente.user_data_set({'solicitud_en_proceso': False})
-        return redirect('ver_cables_tablero', tablero_id=tablero_id)
-
+    # Verifica si la solicitud es AJAX para actualizar estado en tiempo real
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         solicitud_en_proceso = cliente.user_data_get().get('solicitud_en_proceso')
         return JsonResponse({'solicitud_en_proceso': solicitud_en_proceso})
 
     return render(request, 'operario/vista_espera.html', {'tablero_id': tablero_id})
-

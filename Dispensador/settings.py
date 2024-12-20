@@ -149,3 +149,8 @@ EMAIL_HOST_PASSWORD = 'k#Iy5V7]D!PO'  # La contraseña de tu cuenta de correo
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 DEFAULT_CHARSET = 'utf-8'
 
+
+# Configuración de Celery
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # URL de Redis
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'

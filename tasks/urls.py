@@ -77,4 +77,5 @@ urlpatterns = [
     path('configuracion/eliminar/<int:id>/', views.eliminar_configuracion_cable, name='eliminar_configuracion_cable'),
     
     path('vista_espera/<str:tablero_id>/', views.vista_espera, name='vista_espera'),
+
 ]

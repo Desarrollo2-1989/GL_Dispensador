@@ -36,7 +36,7 @@ Administrar Cables - {{ block.super }}
         </div>
         <!-- Formulario de búsqueda -->
         <form method="GET" class="input-group mt-3" style="max-width: 400px;">
-            <input type="text" name="q" class="form-control" placeholder="Buscar por tipo o referencia" value="{{ query|default:'' }}">
+            <input type="text" name="q" class="form-control" placeholder="Buscar por referencia" value="{{ query|default:'' }}">
             <div class="input-group-append">
                 <button type="submit" class="btn btn-outline-primary">
                     <i class="fas fa-search"></i> Buscar
